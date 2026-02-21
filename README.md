@@ -1,0 +1,1 @@
+:star: A tauri demo

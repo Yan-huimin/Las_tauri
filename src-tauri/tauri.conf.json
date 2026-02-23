@@ -11,9 +11,9 @@
     "windows": [
       {
         "title": "demo_las",
-        "width": 800,
-        "height": 600,
         "resizable": true,
+        "minWidth": 1280,
+        "minHeight": 800,
         "fullscreen": false
       }
     ],

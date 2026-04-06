@@ -10,12 +10,12 @@ const items: any[] = [
     },
     {
         id: "2",
-        w: 2, h: 3,
+        w: 2, h: 2,
         component: <div className="p-4 h-full"><ContainerItem id="2" title="Item 2" /></div>,
     },
     {
         id: "3",
-        w: 4, h: 4,
+        w: 4, h: 2,
         component: <div className="p-4 h-full"><ContainerItem id="3" title="Item 3" /></div>,
     },
     {
@@ -23,11 +23,11 @@ const items: any[] = [
         w: 2, h: 1,
         component: <div className="p-4 h-full"><ContainerItem id="4" title="Item 4" /></div>,
     },
-    {
-        id: "5",
-        w: 2, h: 1,
-        component: <div className="p-4 h-full"><ContainerItem id="5" title="Item 5" /></div>,
-    }
+    // {
+    //     id: "5",
+    //     w: 2, h: 1,
+    //     component: <div className="p-4 h-full"><ContainerItem id="5" title="Item 5" /></div>,
+    // }
 ];
 
 const Home = () => {

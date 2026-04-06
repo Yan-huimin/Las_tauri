@@ -1,5 +1,6 @@
 import GridContainer from "@/components/base/gridcontainer";
 import Navbar from "@/components/base/navbar";
+import AboutDev from "@/components/settings/aboutdev";
 import SettingBase from "@/components/settings/setting-base";
 import SettingDev from "@/components/settings/setting-dev";
 
@@ -11,6 +12,10 @@ const SettingItems = [
     {
         id: "2",
         component: <div className="p-4 h-auto"><SettingBase /></div>,
+    },
+    {
+        id: "3",
+        component: <div className="p-4 h-auto"><AboutDev /></div>,
     }
 ]
 

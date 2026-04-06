@@ -31,7 +31,7 @@ const GridContainer: React.FC<MasonryGridProps> = ({
   gap = 16,
 }) => {
   return (
-    <div className="masonry-container">
+    <div className="masonry-container select-none">
       <Masonry
         breakpointCols={columns}
         className="my-masonry-grid"

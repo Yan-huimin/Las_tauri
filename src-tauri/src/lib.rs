@@ -1,6 +1,5 @@
 use tauri::Manager;
 
-
 #[tauri::command]
 fn open_devtools(app: tauri::AppHandle) {
   if let Some(window) = app.get_webview_window("main") {

@@ -1,3 +1,28 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* 1. 滚动条整体宽度 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;      /* 竖向滚动条宽度 */
+  height: 8px;     /* 横向滚动条高度 */
+}
+
+/* 2. 滚动条轨道 (背景) */
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent; 
+  border-radius: 4px;
+}
+
+/* 3. 滚动条滑块 (滑块本身) */
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1; /* 滑块颜色 (对应 Tailwind 的 slate-300) */
+  border-radius: 4px;        /* 滑块圆角 */
+  border: 2px solid transparent; /* 给滑块留出一点边距感 */
+  background-clip: padding-box;
+}
+
+/* 4. 滑块悬浮状态 */
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8; /* 悬浮时颜色加深 (对应 slate-400) */
+}

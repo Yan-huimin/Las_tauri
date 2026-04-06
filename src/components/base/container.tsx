@@ -22,7 +22,8 @@ const Container: React.FC<ContainerProps> = ({
 }) => {
   return (
     <div
-      className="grid w-full h-full overflow-auto"
+      className="grid w-full h-full overflow-auto
+                 p-2 custom-scrollbar"
       style={{
         gridTemplateColumns: `repeat(${maxColumns}, 1fr)`,
         gridAutoRows: `${rowHeight}px`,
@@ -36,7 +37,7 @@ const Container: React.FC<ContainerProps> = ({
           className="
             bg-[#F8F8F8] dark:bg-[#282A36] 
             rounded-3xl shadow-sm border border-zinc-200 dark:border-zinc-700
-            overflow-hidden
+            overflow-y-auto
           "
           style={{
             // 设置跨度：span 1, span 2 等

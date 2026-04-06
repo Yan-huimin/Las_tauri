@@ -1,18 +1,22 @@
 import LayoutBtn from '@/components/base/layouttbn';
 import { useNavStore } from '@/store/useNavStore';
 import Info from '@/utils/info';
+import { FaHome } from 'react-icons/fa';
+import { MdOutlineViewInAr } from "react-icons/md";
+import { FaBloggerB } from "react-icons/fa6";
+import { IoMdSettings } from "react-icons/io";
 
 const Layout = () => {
 
-    const {setPage} = useNavStore();
+    const {setPage, currentId} = useNavStore();
 
     return (<>
-        <div className="flex flex-col h-full w-full m-2 p-2 rounded-lg gap-4">
+        <div className="flex flex-col h-full w-full m-2 p-2 rounded-lg gap-4 select-none">
             <div className='flex-7 flex flex-col gap-2'>
-                <LayoutBtn title="首页" onClick={() => setPage("home")} />
-                <LayoutBtn title="视图" onClick={() => setPage("view")} />
-                <LayoutBtn title="日志" onClick={() => setPage("logs")} />
-                <LayoutBtn title="设置" onClick={() => setPage("settings")} />
+                <LayoutBtn title="Home" logo={<FaHome />} currentId={currentId} onClick={() => setPage("home")} />
+                <LayoutBtn title="View" logo={<MdOutlineViewInAr />} currentId={currentId} onClick={() => setPage("view")} />
+                <LayoutBtn title="Logs" logo={<FaBloggerB />} currentId={currentId} onClick={() => setPage("logs")} />
+                <LayoutBtn title="Settings" logo={<IoMdSettings />} currentId={currentId} onClick={() => setPage("settings")} />
             </div>
             <div className='w-full flex-none h-[200px]'>
                 <Info />

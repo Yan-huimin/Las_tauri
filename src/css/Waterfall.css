@@ -1,0 +1,27 @@
+/* 主容器 */
+.my-masonry-grid {
+  display: flex;
+  margin-left: -20px; /* 这里的负值要和下面的 padding-left 一致 */
+  width: auto;
+}
+
+/* 每一列的样式 */
+.my-masonry-grid_column {
+  padding-left: 20px; /* 列间距 */
+  background-clip: padding-box;
+}
+
+/* 如果需要平滑的布局切换动画 */
+.masonry-item-wrapper {
+  transition: all 0.3s ease-in-out;
+}
+
+/* 移动端优化 */
+@media (max-width: 500px) {
+  .my-masonry-grid {
+    margin-left: 0;
+  }
+  .my-masonry-grid_column {
+    padding-left: 0;
+  }
+}

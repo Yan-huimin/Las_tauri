@@ -8,6 +8,21 @@ function App() {
 
   const theme = useThemeStore((state) => state.theme);
 
+  // 禁用右键
+  window.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+  });
+
+  // 禁用 F12 / Ctrl+Shift+I
+  window.addEventListener("keydown", (e) => {
+    if (
+      e.key === "F12" ||
+      (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "i")
+    ) {
+      e.preventDefault();
+    }
+  });
+
   useEffect(() => {
     const root = window.document.documentElement;
     if (theme === 'dark') {
@@ -20,8 +35,8 @@ function App() {
 
   return (
     <>
-      <div className="bg-[#1E1F27] dark:bg-gray-900 min-h-screen min-w-full fixed flex flex-row">
-        <div className='w-64 bg-[#2E303D] flex items-center justify-center border-r-1 border-gray-500'>
+      <div className="min-h-screen min-w-full fixed flex flex-row">
+        <div className='w-64 dark:bg-[#2E303D] bg-white flex items-center justify-center border-r-1 border-gray-500'>
           <Layout />
         </div>
         <div className='flex-1 bg-green-500'>

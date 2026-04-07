@@ -1,6 +1,7 @@
 import { useSettings } from "@/hooks/settings/useSettings";
 import SettingItem from "@/components/settings/settingitems";
 import SettingsBar from "./settings-bar";
+import SettingBtn from "../base/settingsbtn";
 
 const SettingDev = () => {
 
@@ -45,21 +46,8 @@ const SettingDev = () => {
 
       {/* 操作项 */}
       <div className="space-y-3">
-        <button
-          key={'sdb-1'}
-          onClick={handleOpenDevTools}
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition cursor-pointer"
-        >
-          打开开发者工具
-        </button>
-
-        <button
-          key={'sdb-2'}
-          onClick={handleClearCache}
-          className="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg transition cursor-pointer"
-        >
-          清除缓存
-        </button>
+        <SettingBtn name="开发者工具" color="bg-blue-500" onClick={() => {handleOpenDevTools()}} />
+        <SettingBtn name="清除缓存" color="bg-red-500" onClick={() => {handleClearCache()}} />
       </div>
     </div>
   );

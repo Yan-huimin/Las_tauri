@@ -1,5 +1,5 @@
 import Navbar from '@/components/base/navbar';
-import { useLogs } from "@/hooks/logs/useLogs";
+import { useLogs } from "@/hooks/log/useLogs";
 import type { LogItem } from '@/types/log';
 
 const Logs = () => {

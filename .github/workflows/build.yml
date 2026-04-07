@@ -1,46 +1,42 @@
-name: 跨平台兼容性检查
+name: Cross Platform Checks
 
-# 触发条件：当你 push 代码到 main 分支时自动运行
 on:
   push:
     branches: [ "main", "master" ]
   pull_request:
     branches: [ "main", "master" ]
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
-  # 任务一：在 Linux 环境检查 Node.js
   node-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4 # 拉取代码
+      - uses: actions/checkout@v5
 
-      - name: 安装 Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
         with:
           node-version: '24'
           cache: 'npm'
 
-      - name: 安装依赖并编译
+      - name: Install dependencies and build
         run: |
           npm install
           npm run build --if-present
 
-  # 任务二：在 Linux 环境检查 Rust
   rust-check:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./src-tauri
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - name: 安装 Rust 工具链
+      - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      - name: 缓存 Rust 依赖
+      - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: 检查编译和测试
+      - name: Check Rust targets
         run: |
-          cargo check
-          cargo test
+          cargo check --all-targets

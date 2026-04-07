@@ -1,0 +1,43 @@
+name: 跨平台兼容性检查
+
+# 触发条件：当你 push 代码到 main 分支时自动运行
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  # 任务一：在 Linux 环境检查 Node.js
+  node-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4 # 拉取代码
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 安装依赖并编译
+        run: |
+          npm install
+          npm run build --if-present
+
+  # 任务二：在 Linux 环境检查 Rust
+  rust-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 缓存 Rust 依赖
+        uses: Swatinem/rust-cache@v2
+
+      - name: 检查编译和测试
+        run: |
+          cargo check
+          cargo test

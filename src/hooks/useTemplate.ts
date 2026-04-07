@@ -1,4 +1,4 @@
-import { useNavStore } from "@/store/usenavstore";
+import { useNavStore } from "@/store/useNavStore";
 
 export const useTemplate = () => {
     const {currentId, visitedIds} = useNavStore();

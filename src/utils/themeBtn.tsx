@@ -1,4 +1,4 @@
-import { useThemeStore } from "@/store/usethemestore";
+import { useThemeStore } from "@/store/useThemeStore";
 import { FaSun } from "react-icons/fa";
 
 const ThemeBtn = () => {

@@ -1,12 +1,13 @@
-import '@/App'
-import { useThemeStore } from '@/store/usethemestore'
+import '@/App';
+import { useThemeStore } from '@/store/useThemeStore';
 import { useEffect } from 'react';
+import type { ThemeState } from '@/store/useThemeStore';
 import Template from './utils/template';
 import Layout from './pages/layout';
 
 function App() {
 
-  const theme = useThemeStore((state) => state.theme);
+  const theme = useThemeStore((state: ThemeState) => state.theme);
 
   // 禁用右键
   window.addEventListener("contextmenu", (e) => {
@@ -30,21 +31,18 @@ function App() {
     } else {
       root.classList.remove('dark');
     }
-    console.log('Current theme:', root.className);
-  }, [theme])
+  }, [theme]);
 
   return (
-    <>
-      <div className="min-h-screen min-w-full fixed flex flex-row">
-        <div className='w-64 dark:bg-[#2E303D] bg-white flex items-center justify-center border-r-1 border-gray-500'>
-          <Layout />
-        </div>
-        <div className='flex-1 bg-green-500'>
-          <Template />
-        </div>
+    <div className="min-h-screen min-w-full fixed flex flex-row">
+      <div className='w-64 dark:bg-[#2E303D] bg-white flex items-center justify-center border-r-1 border-gray-500'>
+        <Layout />
       </div>
-    </>
-  )
+      <div className='flex-1 bg-green-500'>
+        <Template />
+      </div>
+    </div>
+  );
 }
 
-export default App
+export default App;

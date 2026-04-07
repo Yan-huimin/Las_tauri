@@ -6,6 +6,8 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+!src/hooks/logs/
+!src/hooks/logs/**
 
 node_modules
 dist

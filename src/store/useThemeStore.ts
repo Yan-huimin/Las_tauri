@@ -22,3 +22,5 @@ export const useThemeStore = create<ThemeState>()(
         }
     )
 )
+
+export type { ThemeState };

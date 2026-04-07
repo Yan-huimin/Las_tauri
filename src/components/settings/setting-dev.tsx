@@ -1,4 +1,4 @@
-import { useSettings } from "@/hooks/settings/usesettings";
+import { useSettings } from "@/hooks/settings/useSettings";
 import SettingItem from "@/components/settings/settingitems";
 import SettingsBar from "./settings-bar";
 import SettingBtn from "../base/settingsbtn";
@@ -15,30 +15,30 @@ const SettingDev = () => {
   return (
     <div className="p-4 space-y-6 h-full">
       {/* 标题 */}
-      <SettingsBar name="高级" />
+      <SettingsBar name="Advanced" />
 
       {/* 开关项 */}
       <div className="space-y-4">
         <SettingItem
           key={'sds-1'}
-          title="启用 DevTools"
-          desc="允许打开开发者工具"
+          title="Enable DevTools"
+          desc="Allow opening developer tools."
           checked={settings.enableDevTools}
           onChange={() => toggle("enableDevTools")}
         />
 
         <SettingItem
           key={'sds-2'}
-          title="启用日志"
-          desc="输出调试日志"
+          title="Enable Logs"
+          desc="Output debug logs."
           checked={settings.enableLog}
           onChange={() => toggle("enableLog")}
         />
 
         <SettingItem
           key={'sds-3'}
-          title="Mock 模式"
-          desc="使用模拟数据（开发调试用）"
+          title="Mock Mode"
+          desc="Use mock data during development."
           checked={settings.mockMode}
           onChange={() => toggle("mockMode")}
         />
@@ -46,8 +46,8 @@ const SettingDev = () => {
 
       {/* 操作项 */}
       <div className="space-y-3">
-        <SettingBtn name="开发者工具" color="bg-blue-500" onClick={() => {handleOpenDevTools()}} />
-        <SettingBtn name="清除缓存" color="bg-red-500" onClick={() => {handleClearCache()}} />
+        <SettingBtn name="Open DevTools" color="bg-blue-500" onClick={handleOpenDevTools} />
+        <SettingBtn name="Clear Cache" color="bg-red-500" onClick={handleClearCache} />
       </div>
     </div>
   );

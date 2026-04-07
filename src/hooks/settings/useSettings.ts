@@ -1,8 +1,9 @@
-import { type DevSettings } from '@/types/settings';
 import { useEffect, useState } from 'react';
-import { useThemeStore } from '@/store/usethemestore';
 import { invoke } from '@tauri-apps/api/core';
 import { DEFAULT_SETTINGS } from '@/hooks/settings/settings.config';
+import { useThemeStore } from '@/store/useThemeStore';
+import type { ThemeState } from '@/store/useThemeStore';
+import type { DevSettings } from '@/types/settings';
 
 
 // 清除缓存
@@ -21,7 +22,7 @@ const openDevTools = async () => {
 }
 
 const handleOpenDevTools = () => {
-    openDevTools();
+    void openDevTools();
 };
 
 // 日志相关
@@ -55,11 +56,11 @@ const sendAllLogs = async (message: string) => {
 export const useSettings = () => {
 
     const [settings, setSettings] = useState<DevSettings>(() => {
-        const saved = localStorage.getItem("dev-settings");
+        const saved = localStorage.getItem('dev-settings');
         return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
-    })
+    });
 
-    const toggleTheme = useThemeStore((state) => state.toggleTheme);
+    const toggleTheme = useThemeStore((state: ThemeState) => state.toggleTheme);
 
     const toggle = (key: keyof DevSettings) => {
         setSettings((prev) => ({
@@ -70,7 +71,7 @@ export const useSettings = () => {
 
   // 持久化
   useEffect(() => {
-    localStorage.setItem("dev-settings", JSON.stringify(settings));
+    localStorage.setItem('dev-settings', JSON.stringify(settings));
   }, [settings]);
 
   return {

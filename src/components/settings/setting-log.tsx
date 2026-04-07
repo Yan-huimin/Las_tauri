@@ -1,4 +1,4 @@
-import { useSettings } from "@/hooks/settings/usesettings";
+import { useSettings } from "@/hooks/settings/useSettings";
 import SettingsBar from "./settings-bar";
 import SettingBtn from "../base/settingsbtn";
 

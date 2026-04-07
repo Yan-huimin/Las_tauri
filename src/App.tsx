@@ -1,5 +1,5 @@
 import '@/App'
-import { useThemeStore } from '@/store/useThemeStore'
+import { useThemeStore } from '@/store/usethemestore'
 import { useEffect } from 'react';
 import Template from './utils/template';
 import Layout from './pages/layout';

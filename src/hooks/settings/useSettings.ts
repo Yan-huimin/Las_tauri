@@ -1,6 +1,6 @@
 import { type DevSettings } from '@/types/settings';
 import { useEffect, useState } from 'react';
-import { useThemeStore } from '@/store/useThemeStore';
+import { useThemeStore } from '@/store/usethemestore';
 import { invoke } from '@tauri-apps/api/core';
 import { DEFAULT_SETTINGS } from '@/hooks/settings/settings.config';
 

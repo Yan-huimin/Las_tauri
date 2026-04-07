@@ -1,5 +1,5 @@
 import LayoutBtn from '@/components/base/layouttbn';
-import { useNavStore } from '@/store/useNavStore';
+import { useNavStore } from '@/store/usenavstore';
 import Info from '@/utils/info';
 import { FaHome } from 'react-icons/fa';
 import { MdOutlineViewInAr } from "react-icons/md";

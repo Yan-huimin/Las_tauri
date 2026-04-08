@@ -12,7 +12,7 @@ const AboutDev = () => {
     name: "yhm",
     role: "Full AI Developer / UI Designer",
     avatar: head,
-    bio: "热衷于使用AI构建各种shit项目",
+    bio: "shit",
     links: [
       { icon: <FaGithub size={18} />, label: "GitHub", url: "https://github.com/yan-huimin" },
       { icon: <FaGlobe size={18} />, label: "Website", url: "https://example.com" },
@@ -31,7 +31,7 @@ const AboutDev = () => {
   return (
     <div className="p-4 space-y-6 h-full overflow-y-auto">
       {/* 标题 */}
-      <SettingsBar name="关于开发者" />
+      <SettingsBar name="About dev" />
 
       {/* 个人核心资料卡片 */}
       <div className="flex flex-col items-center p-6 bg-[#F8F8F8] dark:bg-[#2E303D] rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-sm">
@@ -49,7 +49,7 @@ const AboutDev = () => {
 
       {/* 技术栈标签 */}
       <div className="space-y-3">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 ml-1">技术栈</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 ml-1">skill</h3>
         <div className="flex flex-wrap gap-2">
           {devInfo.techStack.map((tech) => (
             <span 
@@ -64,7 +64,7 @@ const AboutDev = () => {
 
       {/* 社交链接列表 */}
       <div className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 ml-1">社交联系</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 ml-1">contact</h3>
         <div className="grid grid-cols-2 gap-3">
           {devInfo.links.map((link) => (
             <button

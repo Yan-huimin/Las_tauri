@@ -18,7 +18,7 @@ const HOME_ITEMS: any[] = [
     },
     {
         id: "4",
-        w: 4, h: 2,
+        w: 4, h: 3,
         component: <div className="p-4 h-full"><ContainerItem id="4" title="Item 4" /></div>,
     },
 ];

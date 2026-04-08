@@ -46,8 +46,8 @@ const SettingDev = () => {
 
       {/* 操作项 */}
       <div className="space-y-3">
-        <SettingBtn name="Open DevTools" color="bg-blue-500" onClick={handleOpenDevTools} />
-        <SettingBtn name="Clear Cache" color="bg-red-500" onClick={handleClearCache} />
+        <SettingBtn name="Open DevTools" color="bg-blue-500" hoverColor="hover:bg-blue-600" onClick={handleOpenDevTools} />
+        <SettingBtn name="Clear Cache" color="bg-red-500" hoverColor="hover:bg-red-600" onClick={handleClearCache} />
       </div>
     </div>
   );

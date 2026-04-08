@@ -1,16 +1,17 @@
 interface SettingBtnProps {
     name: string;
     color?: string;
+    hoverColor?: string;
     onClick: () => void;
 }
 
-const SettingBtn = ({ name, color, onClick }: SettingBtnProps) => {
+const SettingBtn = ({ name, color, hoverColor, onClick }: SettingBtnProps) => {
     return (<>
         <button
             onClick={() => {
                 onClick();
             }}
-            className={`w-full ${color || "bg-blue-500"} hover:${color?.replace("bg-", "hover:bg-") || "hover:bg-blue-600"} text-white py-2 rounded-lg transition cursor-pointer`}
+            className={`w-full ${color || "bg-blue-500"} ${hoverColor || "hover:bg-blue-600"} text-white py-2 rounded-lg transition cursor-pointer`}
         >
             {name}
         </button>

@@ -3,6 +3,7 @@ import SettingBase from "@/components/settings/setting-base";
 import AboutDev from "@/components/settings/aboutdev";
 import SettingLog from "@/components/settings/setting-log";
 import type { DevSettings } from "@/types/settings";
+import SettingBaseTest from "@/components/settings/setting-test-base";
 
 const SETTING_ITEMS = [
     {
@@ -20,6 +21,10 @@ const SETTING_ITEMS = [
     {
         id: "4",
         component: <div className="p-4 h-auto"><SettingLog /></div>,
+    },
+    {
+        id: "5",
+        component: <div className="p-4 h-auto"><SettingBaseTest /></div>,
     }
 ]
 

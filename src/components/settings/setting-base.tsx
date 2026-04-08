@@ -15,7 +15,7 @@ const SettingBase = () => {
       
       {/* 操作项 */}
       <div className="space-y-3">
-        <SettingBtn name="Toggle Theme" color="bg-green-500" onClick={toggleTheme} />
+        <SettingBtn name="Toggle Theme" color="bg-green-500" hoverColor="hover:bg-green-600" onClick={toggleTheme} />
       </div>
     </div>
   );

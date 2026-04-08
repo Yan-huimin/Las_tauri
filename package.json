@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev:ui": "vite",
+    "dev:ui": "set NODE_OPTIONS=--max-old-space-size=8192 && vite",
     "dev:tauri": "tauri dev",
     "dev": "concurrently \"npm run dev:ui\" \"npm run dev:tauri\"",
     "build:ui": "vite build",

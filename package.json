@@ -6,7 +6,8 @@
   "scripts": {
     "dev:ui": "set NODE_OPTIONS=--max-old-space-size=8192 && vite",
     "dev:tauri": "tauri dev",
-    "dev": "concurrently \"npm run dev:ui\" \"npm run dev:tauri\"",
+    "dev": "concurrently \"npm run clean\" \"npm run dev:ui\" \"npm run dev:tauri\"",
+    "clean": "rm -rf node_modules/.vite",
     "build:ui": "vite build",
     "build:tauri": "tauri build",
     "dist:win": "tauri build --target x86_64-pc-windows-msvc",

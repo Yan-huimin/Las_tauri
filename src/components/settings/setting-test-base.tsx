@@ -11,7 +11,7 @@ const SettingBaseTest = () => {
       
       {/* 操作项 */}
       <div className="space-y-3">
-        <SettingBtn name="Test cxx" color="bg-green-500" hoverColor="hover:bg-green-600" onClick={async () => {
+        <SettingBtn name="Test c11" color="bg-green-500" hoverColor="hover:bg-green-600" onClick={async () => {
             await invoke("get_point_cloud");
         }} />
       </div>

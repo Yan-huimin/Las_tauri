@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev:ui": "set NODE_OPTIONS=--max-old-space-size=8192 && vite",
-    "dev:tauri": "tauri dev",
+    "dev:ui": "cross-env NODE_OPTIONS=--max-old-space-size=8192 vite",
+    "dev:tauri": "WEBKIT_DISABLE_COMPOSITING_MODE=1 tauri dev",
     "dev": "concurrently \"npm run clean\" \"npm run dev:ui\" \"npm run dev:tauri\"",
     "clean": "rm -rf node_modules/.vite",
     "build:ui": "vite build",
@@ -35,6 +35,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
     "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",

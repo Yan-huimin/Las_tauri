@@ -1,26 +1,14 @@
-use tauri::Manager;
 mod logger;
-use logger::{get_logs, clear_logs, push_log, send_error_log, send_info_log, send_warn_log, send_debug_log};
-use las::{Reader, point::Point};
+mod ylib;
 
-
-// 打开开发者工具（调试用）
-#[tauri::command]
-fn open_devtools(app: tauri::AppHandle) {
-  if let Some(window) = app.get_webview_window("main") {
-    // push_log("error", "测试错误日志".to_string());
-    // push_log("info", "测试信息日志".to_string());
-    // push_log("warn", "测试警告日志".to_string());
-    // push_log("debug", "测试调试日志".to_string());
-    window.open_devtools();
-    push_log("debug", "open devtools".to_string());
-  }
-}
+use ylib::{ open_devtools, load_las_file, pick_file_path };
+use logger::{get_logs, clear_logs, send_error_log, send_info_log, send_warn_log, send_debug_log};
 
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
+    .plugin(tauri_plugin_dialog::init())
     .setup(|app| {
       if cfg!(debug_assertions) {
         app.handle().plugin(
@@ -39,6 +27,8 @@ pub fn run() {
         send_info_log,
         send_warn_log,
         send_debug_log,
+        load_las_file,
+        pick_file_path,
         ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

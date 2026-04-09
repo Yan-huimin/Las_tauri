@@ -9,8 +9,17 @@ export default defineConfig({
     react(),
     tailwindcss()
   ],
+  // 取消监视这些文件夹，防止node崩溃
   server: {
-    port: 5173
+    port: 5173,
+    watch: {
+      ignored: [
+        '**/.git/**',
+        '**/dist/**',
+        '**/node_modules/**',
+        '**/src-tauri/target/**',
+      ],
+    },
   },
   resolve: {
     alias: {

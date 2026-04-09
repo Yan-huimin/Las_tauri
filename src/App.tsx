@@ -1,4 +1,3 @@
-import '@/App';
 import { useThemeStore } from '@/store/useThemeStore';
 import { useEffect } from 'react';
 import type { ThemeState } from '@/store/useThemeStore';

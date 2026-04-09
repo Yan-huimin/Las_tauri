@@ -1,8 +1,8 @@
 use tauri::Manager;
 mod logger;
-mod pcl;
-
 use logger::{get_logs, clear_logs, push_log, send_error_log, send_info_log, send_warn_log, send_debug_log};
+use las::{Reader, point::Point};
+
 
 // 打开开发者工具（调试用）
 #[tauri::command]
@@ -15,13 +15,6 @@ fn open_devtools(app: tauri::AppHandle) {
     window.open_devtools();
     push_log("debug", "open devtools".to_string());
   }
-}
-
-// cxx测试
-#[tauri::command]
-fn get_point_cloud() {
-    pcl::test_pcl();
-    push_log("debug", "get point cloud".to_string());
 }
 
 
@@ -46,7 +39,6 @@ pub fn run() {
         send_info_log,
         send_warn_log,
         send_debug_log,
-        get_point_cloud
         ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

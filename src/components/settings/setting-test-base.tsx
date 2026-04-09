@@ -14,6 +14,9 @@ const SettingBaseTest = () => {
         <SettingBtn name="Test c11" color="bg-green-500" hoverColor="hover:bg-green-600" onClick={async () => {
             await invoke("get_point_cloud");
         }} />
+        <SettingBtn name="Test byte" color="bg-green-500" hoverColor="hover:bg-green-600" onClick={async () => {
+            await invoke("");
+        }} />
       </div>
     </div>
   );

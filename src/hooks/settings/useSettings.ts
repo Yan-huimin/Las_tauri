@@ -69,10 +69,9 @@ export const useSettings = () => {
         }));
     };
 
-  // 持久化
-//   useEffect(() => {
-//     localStorage.setItem('dev-settings', JSON.stringify(settings));
-//   }, [settings]);
+  useEffect(() => {
+    localStorage.setItem('dev-settings', JSON.stringify(settings));
+  }, [settings]);
 
   return {
     settings,

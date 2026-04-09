@@ -15,7 +15,6 @@ name = "app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-cxx-build = "1.0.176"
 tauri-build = { version = "2.5.4", features = [] }
 
 
@@ -29,4 +28,5 @@ tracing = "0.1.44"
 tracing-subscriber = "0.3.23"
 chrono = "0.4.44"
 lazy_static = "1.5.0"
-cxx = "1.0.176"
+las = "0.9.11"
+kiddo = "5.3.0"

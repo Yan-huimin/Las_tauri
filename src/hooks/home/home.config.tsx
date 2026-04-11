@@ -9,8 +9,6 @@ import { CloudUpload, Trash2, ScanEye } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import HomeShow from "@/components/home/show/home-show";
 import HomeShowLas from "@/components/home/show/home-show-las";
-import { useLasViewer } from "../viewer/useLasViewer";
-import { useLasStore } from "@/store/useLasStore";
 
 const HOME_ITEMS: any[] = [
     {

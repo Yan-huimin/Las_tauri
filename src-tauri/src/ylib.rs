@@ -69,10 +69,10 @@ pub async fn load_las_info(_app: AppHandle, path: String) -> Result<LasInfo, Str
     let reader = Reader::from_path(&path).map_err(|e| e.to_string())?;
     let header = reader.header();
 
-    // 1. 获取点总数
+    // 获取点总数
     let total_count = header.number_of_points() as i64;
     
-    // 2. 获取边界信息
+    // 获取边界信息
     let bounds = header.bounds();
 
     push_log("info", format!("load las info from {}", path));
@@ -93,12 +93,12 @@ pub async fn load_las_info(_app: AppHandle, path: String) -> Result<LasInfo, Str
 // 分段加载las数据点
 #[tauri::command]
 pub async fn load_las_file(_app: AppHandle, path: String) -> Result<PointCloudData, String> {
-    // 1. 打开 Reader
+    // 打开 Reader
     let mut reader = Reader::from_path(path).map_err(|e| e.to_string())?;
     let header = reader.header();
     let num_points = header.number_of_points() as usize;
 
-    // 2. 抽稀控制逻辑
+    // 抽稀控制逻辑
     // 前端展示上限控制在 200万 - 500万点
     let max_points = 2_000_000; 
     let step = if num_points > max_points {
@@ -107,7 +107,7 @@ pub async fn load_las_file(_app: AppHandle, path: String) -> Result<PointCloudDa
         1
     };
 
-    // 3. 计算中心偏移 (Offset)
+    // 计算中心偏移 (Offset)
     let bounds = header.bounds();
     let offset = [
         (bounds.min.x + bounds.max.x) / 2.0,
@@ -115,7 +115,7 @@ pub async fn load_las_file(_app: AppHandle, path: String) -> Result<PointCloudDa
         (bounds.min.z + bounds.max.z) / 2.0,
     ];
 
-    // 4. 预分配内存 (根据实际采样后的点数分配，避免浪费)
+    // 预分配内存 (根据实际采样后的点数分配，避免浪费)
     let estimated_points = num_points / step;
     let mut positions = Vec::with_capacity(estimated_points * 3);
     let mut colors = Vec::with_capacity(estimated_points * 3);
@@ -124,7 +124,7 @@ pub async fn load_las_file(_app: AppHandle, path: String) -> Result<PointCloudDa
     push_log("info", format!("step length: {}", step));
     push_log("info", format!("rendered points count: {}", estimated_points));
 
-    // 5. 遍历点云 (使用 enumerate 进行步进判断)
+    // 遍历点云 (使用 enumerate 进行步进判断)
     for (index, point) in reader.points().enumerate() {
         // 只有当索引能被 step 整除时才处理该点
         if index % step == 0 {

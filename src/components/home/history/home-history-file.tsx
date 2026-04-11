@@ -1,5 +1,5 @@
 import { useHome } from "@/hooks/home/useHome";
-import { CloudSync, FileText } from "lucide-react";
+import { CloudSync } from "lucide-react";
 
 
 const HomeHistoryFile = () => {

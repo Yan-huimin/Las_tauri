@@ -1,8 +1,10 @@
+import LasViewer from "./lasviewer";
+
 const HomeShowLas = () => {
     return (<>
-        <div className="w-full h-full bg-yellow-500
-                        rounded-md"
-        ></div>
+        <div className="w-auto h-full overflow-y-auto rounded-md">
+            <LasViewer />
+        </div>
     </>)
 };
 

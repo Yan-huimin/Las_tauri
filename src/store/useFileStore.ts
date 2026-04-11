@@ -1,8 +1,11 @@
+import type { LasInfo } from '@/types/las.types';
+import { invoke } from '@tauri-apps/api/core';
 import { create } from 'zustand';
 
 interface FileState {
   workFile: string;
   historyFiles: string[];
+  lasInfo: LasInfo | null;
   
   // Actions
   setWorkFile: (path: string) => void;
@@ -13,18 +16,21 @@ interface FileState {
 
   getWorkFile: () => String;
   getHistoryFile: () => String[];
+
+  getFileInfo: () => void;
 }
 
 const useFileStore = create<FileState>((set, get) => ({
   workFile: '',
   historyFiles: [],
+  lasInfo: null,
 
   setWorkFile: (path: string) => set({ workFile: path }),
 
   // 更新历史文件（追加数组）
   addHistoryFiles: (newFiles: string) =>
     set((state) => ({
-      historyFiles: [...state.historyFiles, newFiles],
+      historyFiles: [...new Set([...state.historyFiles, newFiles])],
     })),
 
   // 重置工作文件
@@ -38,6 +44,20 @@ const useFileStore = create<FileState>((set, get) => ({
 
   getWorkFile: () => get().workFile,
   getHistoryFile: () => get().historyFiles,
+
+  getFileInfo: async () => {
+      const path = get().workFile;
+      
+      if (!path) return;
+
+      try {
+          const data = await invoke<LasInfo>("load_las_info", { path });
+          console.log("LAS Info:", data);
+          set({lasInfo: data});
+      } catch (error) {
+          console.error("Failed to load LAS info:", error);
+      }
+  }
 }));
 
 export default useFileStore;

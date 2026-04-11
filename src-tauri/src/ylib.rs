@@ -1,9 +1,17 @@
 use std::{path::PathBuf};
 use tauri_plugin_dialog::DialogExt;
-use las::Reader;
+use las::{Reader};
 use serde::Serialize;
-use tauri::Manager;
+use tauri::{AppHandle, Manager};
 use crate::logger::{push_log};
+use std::path::Path;
+
+#[tauri::command]
+pub fn check_file_exists(path: String) -> bool {
+    // 使用 Path 结构体检查路径是否存在，且必须是一个文件
+    let path_buf = Path::new(&path);
+    path_buf.exists() && path_buf.is_file()
+}
 
 // 打开开发者工具（调试用）
 #[tauri::command]
@@ -18,11 +26,19 @@ pub fn open_devtools(app: tauri::AppHandle) {
   }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct PointCloudData {
     pub positions: Vec<f32>,
     pub colors: Vec<u8>,
     pub offset: [f64; 3],
+}
+
+#[derive(Serialize, Clone)]
+pub struct LasInfo {
+    pub x_max: f64, x_min: f64,
+    pub y_max: f64, y_min: f64,
+    pub z_max: f64, z_min: f64,
+    pub total_count: i64,
 }
 
 // 文件选择器命令，返回用户选择的文件路径
@@ -47,22 +63,49 @@ pub async fn pick_file_path(handle: tauri::AppHandle) -> Result<PathBuf, String>
     }
 }
 
-
-
 #[tauri::command]
-pub async fn load_las_file(path: String) -> Result<PointCloudData, String> {
-    let mut reader = Reader::from_path(&path).map_err(|e| e.to_string())?;
-    let header = reader.header().clone(); // 克隆 header 以便后续使用
+pub async fn load_las_info(_app: AppHandle, path: String) -> Result<LasInfo, String> {
+    let reader = Reader::from_path(path).map_err(|e| e.to_string())?;
+    let header = reader.header();
+
+    // 1. 获取点总数
+    let total_count = header.number_of_points() as i64;
+    
+    // 2. 获取边界信息
+    let bounds = header.bounds();
+
+    println!("--->原始总点数: {}", total_count);
+
+    // 修正：确保 y 对应 .y，z 对应 .z
+    Ok(LasInfo {
+        x_max: bounds.max.x,
+        x_min: bounds.min.x,
+        y_max: bounds.max.y, 
+        y_min: bounds.min.y,
+        z_max: bounds.max.z,
+        z_min: bounds.min.z,
+        total_count: total_count,
+    })
+}
+
+// 分段加载las数据点
+#[tauri::command]
+pub async fn load_las_file(_app: AppHandle, path: String) -> Result<PointCloudData, String> {
+    // 1. 打开 Reader
+    let mut reader = Reader::from_path(path).map_err(|e| e.to_string())?;
+    let header = reader.header();
     let num_points = header.number_of_points() as usize;
 
-    if num_points == 0 {
-        return Err("文件不包含任何点".into());
-    }
+    // 2. 抽稀控制逻辑
+    // 前端展示上限控制在 200万 - 500万点
+    let max_points = 2_000_000; 
+    let step = if num_points > max_points {
+        num_points / max_points
+    } else {
+        1
+    };
 
-    let max_points = 2_000_000;
-    // 确保 step 至少为 1，防止除以 0 风险
-    let step = (num_points / max_points).max(1);
-
+    // 3. 计算中心偏移 (Offset)
     let bounds = header.bounds();
     let offset = [
         (bounds.min.x + bounds.max.x) / 2.0,
@@ -70,34 +113,40 @@ pub async fn load_las_file(path: String) -> Result<PointCloudData, String> {
         (bounds.min.z + bounds.max.z) / 2.0,
     ];
 
+    // 4. 预分配内存 (根据实际采样后的点数分配，避免浪费)
     let estimated_points = num_points / step;
     let mut positions = Vec::with_capacity(estimated_points * 3);
     let mut colors = Vec::with_capacity(estimated_points * 3);
 
-    // 建议：如果 LAS 库支持按索引读取或批量读取，性能会更佳
-    // 这里依然使用迭代器，但加入了简单的错误跳过处理
-    for (index, point_result) in reader.points().enumerate() {
-        if index % step == 0 {
-            if let Ok(p) = point_result {
-                // 确保在高精度下完成减法
-                positions.push((p.x - offset[0]) as f32 );
-                positions.push((p.y - offset[1]) as f32 );
-                positions.push((p.z - offset[2]) as f32 );
+    println!("点云处理信息：");
+    println!("原始总点数: {}", num_points);
+    println!("采样步长: {}", step);
+    println!("预计渲染点数: {}", estimated_points);
 
-                if let Some(color) = p.color {
-                    colors.push((color.red >> 8) as u8);
-                    colors.push((color.green >> 8) as u8);
-                    colors.push((color.blue >> 8) as u8);
-                } else {
-                    colors.push(100);
-                    colors.push(100);
-                    colors.push(100);
-                }
+    // 5. 遍历点云 (使用 enumerate 进行步进判断)
+    for (index, point) in reader.points().enumerate() {
+        // 只有当索引能被 step 整除时才处理该点
+        if index % step == 0 {
+            let p = point.map_err(|e| e.to_string())?;
+            
+            // 坐标处理
+            positions.push((p.x - offset[0]) as f32);
+            positions.push((p.y - offset[1]) as f32);
+            positions.push((p.z - offset[2]) as f32);
+
+            // 颜色处理
+            if let Some(color) = p.color {
+                colors.push((color.red >> 8) as u8);
+                colors.push((color.green >> 8) as u8);
+                colors.push((color.blue >> 8) as u8);
+            } else {
+                // 默认绿色
+                colors.push(0);
+                colors.push(255);
+                colors.push(0);
             }
         }
     }
-
-    push_log("info", format!("load las file from : {}", path));
 
     Ok(PointCloudData {
         positions,

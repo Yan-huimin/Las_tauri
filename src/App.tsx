@@ -25,16 +25,15 @@ function App() {
     window.addEventListener("contextmenu", handleContextMenu);
     window.addEventListener("keydown", handleKeyDown);
 
-    // 【关键】清理函数：防止热更新时监听器无限堆积导致内存溢出
+    // 防止热更新时监听器无限堆积导致内存溢出
     return () => {
       window.removeEventListener("contextmenu", handleContextMenu);
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, []); // 空依赖数组表示仅在组件挂载和卸载时执行
+  }, []);
 
   useEffect(() => {
     const root = window.document.documentElement;
-    // 使用 toggle 第二个参数更加直观
     root.classList.toggle('dark', theme === 'dark');
   }, [theme]);
 
@@ -46,7 +45,7 @@ function App() {
       </div>
       
       {/* 主内容区 */}
-      <div className='flex-1 bg-green-500'>
+      <div className='flex-1 bg-blue-500'>
         <Template />
       </div>
     </div>

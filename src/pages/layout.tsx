@@ -25,7 +25,7 @@ const Layout = () => {
                 <LayoutBtn title="Logs" logo={<FaBloggerB />} currentId={currentId} onClick={() => setPage("logs")} />
                 <LayoutBtn title="Settings" logo={<IoMdSettings />} currentId={currentId} onClick={() => setPage("settings")} />
             </div>
-            <div className='w-full flex-none h-[200px]'>
+            <div className='w-full flex-none h-auto'>
                 <Info />
             </div>
         </div>

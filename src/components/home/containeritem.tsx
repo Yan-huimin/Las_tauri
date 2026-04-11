@@ -16,8 +16,8 @@ const ContainerItem = (props: ContainerItemProps) => {
                 </div>
             </h2>
             <hr className="text-gray-500 p-2" />
-            <div className="w-full h-full overflow-y-auto 
-                            rounded-md custom-scrollbar p-1">
+            <div className="w-full h-full
+                            rounded-md overflow-y-auto custom-scrollbar p-1">
                 {props.Listitems?.map((item, index) => (
                     <div key={index} className="p-2 w-full h-auto">
                         {item.icon}

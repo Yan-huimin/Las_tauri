@@ -5,13 +5,18 @@ import HomeHistory from "@/components/home/history/home-history";
 import HomeHistoryFile from "@/components/home/history/home-history-file";
 import useFileStore from "@/store/useFileStore";
 import type { ListItem, ToolItem } from "@/types/home.types";
-import { CloudUpload, Trash2 } from "lucide-react";
+import { CloudUpload, Trash2, ScanEye } from "lucide-react";
+import { invoke } from "@tauri-apps/api/core";
+import HomeShow from "@/components/home/show/home-show";
+import HomeShowLas from "@/components/home/show/home-show-las";
+import { useLasViewer } from "../viewer/useLasViewer";
+import { useLasStore } from "@/store/useLasStore";
 
 const HOME_ITEMS: any[] = [
     {
         id: "1",
         w: 2, h: 3,
-        component: <div className="p-4 h-full"><ContainerItem id="1" title="Show" /></div>,
+        component: <div className="p-4 h-full"><HomeShow /></div>,
     },
     {
         id: "2",
@@ -43,6 +48,17 @@ const HOME_FILE_LOGO_CONFIG: ToolItem[] = [
         id: "1",
         name: "New File",
         icon: <CloudUpload  />,
+        onClick: async () => {
+            try {
+                const cur: string = await invoke("pick_file_path");
+                    if (cur) {
+                        useFileStore.getState().setWorkFile(cur);
+                        useFileStore.getState().addHistoryFiles(cur);
+                    }
+                } catch (err) {
+                    console.error("load file error:", err);
+                }
+        }
     },
     {
         id: '2',
@@ -73,10 +89,31 @@ const HOME_HISTORY_LOGO_CONFIG: ToolItem[] = [
     }
 ]
 
+const HOME_SHOW_CONFIG: ListItem[] = [
+    {
+        id: '',
+        name: '',
+        icon: <HomeShowLas />
+    }
+]
+
+const HOME_SHOW_LOGO_CONFIG: ToolItem[] = [
+    {
+        id: '',
+        name: '',
+        icon: <ScanEye />,
+        onClick() {
+            
+        }
+    }
+]
+
 export {
     HOME_ITEMS,
     HOME_FILE_CONFIG,
     HOME_FILE_LOGO_CONFIG,
     HOME_HISTORY_CONFIG,
-    HOME_HISTORY_LOGO_CONFIG
+    HOME_HISTORY_LOGO_CONFIG,
+    HOME_SHOW_CONFIG,
+    HOME_SHOW_LOGO_CONFIG
 }

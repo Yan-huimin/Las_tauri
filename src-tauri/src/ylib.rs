@@ -1,4 +1,5 @@
-use std::{path::PathBuf};
+use core::num;
+use std::{fmt::format, path::PathBuf};
 use tauri_plugin_dialog::DialogExt;
 use las::{Reader};
 use serde::Serialize;
@@ -65,7 +66,7 @@ pub async fn pick_file_path(handle: tauri::AppHandle) -> Result<PathBuf, String>
 
 #[tauri::command]
 pub async fn load_las_info(_app: AppHandle, path: String) -> Result<LasInfo, String> {
-    let reader = Reader::from_path(path).map_err(|e| e.to_string())?;
+    let reader = Reader::from_path(&path).map_err(|e| e.to_string())?;
     let header = reader.header();
 
     // 1. 获取点总数
@@ -74,7 +75,8 @@ pub async fn load_las_info(_app: AppHandle, path: String) -> Result<LasInfo, Str
     // 2. 获取边界信息
     let bounds = header.bounds();
 
-    println!("--->原始总点数: {}", total_count);
+    push_log("info", format!("load las info from {}", path));
+    push_log("info", format!("Las file info: Point_Count {}", total_count));
 
     // 修正：确保 y 对应 .y，z 对应 .z
     Ok(LasInfo {
@@ -118,10 +120,9 @@ pub async fn load_las_file(_app: AppHandle, path: String) -> Result<PointCloudDa
     let mut positions = Vec::with_capacity(estimated_points * 3);
     let mut colors = Vec::with_capacity(estimated_points * 3);
 
-    println!("点云处理信息：");
-    println!("原始总点数: {}", num_points);
-    println!("采样步长: {}", step);
-    println!("预计渲染点数: {}", estimated_points);
+    push_log("info", format!("original points count: {}", num_points));
+    push_log("info", format!("step length: {}", step));
+    push_log("info", format!("rendered points count: {}", estimated_points));
 
     // 5. 遍历点云 (使用 enumerate 进行步进判断)
     for (index, point) in reader.points().enumerate() {

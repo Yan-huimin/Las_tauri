@@ -27,6 +27,47 @@ export const useLasViewer = () => {
     const path = useFileStore((state) => state.workFile);
     const setLasData = useLasStore((state) => state.setLasPoints);
 
+
+        // 停止渲染并清除数据api
+    const handleStopAndClear = async (): Promise<void> => {
+        // 立即切断 Ref 标志位，停止当前的渲染帧或导入回调
+        isAnimatingRef.current = false;
+        
+        // 显式清理 Three.js 显存
+        if (sceneRef.current) {
+            // 强制转换为 THREE.Points 数组进行处理
+            const pointsObjects = sceneRef.current.children.filter(
+            (child): child is THREE.Points => child instanceof THREE.Points
+            );
+
+            pointsObjects.forEach((points) => {
+            sceneRef.current?.remove(points);
+            points.geometry.dispose();
+            
+            if (Array.isArray(points.material)) {
+                points.material.forEach(m => m.dispose());
+            } else {
+                points.material.dispose();
+            }
+            });
+        }
+
+        // 更新 React 状态
+        // 注意：这里的 set 操作是触发异步渲染请求
+        shownPointsRef.current = 0;
+        totalPointsRef.current = 0;
+
+        // 使用 TS 定义的 Promise 等待微任务队列清空
+        // 这一步确保了浏览器有时间执行 Paint (重绘)，让进度条归零
+        await new Promise<void>((resolve) => {
+            setTimeout(() => {
+            resolve();
+            }, 60); // 60ms 略大于一帧(16.6ms)的时间，确保重绘完成
+        });
+
+        console.log("Cleanup complete and UI repainted.");
+    };
+
     // 2. 将加载函数定义为普通的 async 函数
     const handleLoadLas = async () => {
         if (!path) {
@@ -184,6 +225,7 @@ export const useLasViewer = () => {
     return {
         containerRef,
         handleLoadLas,
+        handleStopAndClear,
         isAnimatingRef // 建议通过 Ref 返回，或者在 handleLoadLas 内部使用
     };
 };

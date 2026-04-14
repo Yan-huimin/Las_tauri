@@ -3,7 +3,7 @@ import useFileStore from "@/store/useFileStore";
 import { useEffect } from "react";
 
 const LasViewer = () => {
-  const { containerRef, handleLoadLas } = useLasViewer();
+  const { containerRef, handleLoadLas, handleStopAndClear } = useLasViewer();
   const path = useFileStore((state) => state.workFile);
   const loadLasInfo = useFileStore((state) => state.getFileInfo);
 
@@ -12,6 +12,8 @@ const LasViewer = () => {
     if(path){
       handleLoadLas();
       loadLasInfo();
+    }else if(path === ''){
+      handleStopAndClear();
     }
   }, [path]);
 

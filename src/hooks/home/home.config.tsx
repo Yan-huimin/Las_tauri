@@ -9,6 +9,8 @@ import { CloudUpload, Trash2, ScanEye } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import HomeShow from "@/components/home/show/home-show";
 import HomeShowLas from "@/components/home/show/home-show-las";
+import SpatialDashboard from "@/components/home/lasdata/home-z";
+import HomeZMain from "@/components/home/lasdata/home-z-main";
 
 const HOME_ITEMS: any[] = [
     {
@@ -28,8 +30,8 @@ const HOME_ITEMS: any[] = [
     },
     {
         id: "4",
-        w: 4, h: 4,
-        component: <div className="p-4 h-full"><ContainerItem id="4" title="Data" /></div>,
+        w: 4, h: 3,
+        component: <div className="p-4 h-full"><HomeZMain /></div>,
     },
 ];
 
@@ -106,6 +108,14 @@ const HOME_SHOW_LOGO_CONFIG: ToolItem[] = [
     }
 ]
 
+const HOME_Z_CONFIG: ListItem[] = [
+    {
+        id: '',
+        name: '',
+        icon: <SpatialDashboard />
+    }
+]
+
 export {
     HOME_ITEMS,
     HOME_FILE_CONFIG,
@@ -113,5 +123,6 @@ export {
     HOME_HISTORY_CONFIG,
     HOME_HISTORY_LOGO_CONFIG,
     HOME_SHOW_CONFIG,
-    HOME_SHOW_LOGO_CONFIG
+    HOME_SHOW_LOGO_CONFIG,
+    HOME_Z_CONFIG
 }

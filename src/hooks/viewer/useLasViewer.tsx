@@ -4,7 +4,7 @@ import type { PointCloudData } from "@/types/las.types";
 import { sendErrorLog, sendInfoLog } from "@/utils/sendlog";
 import { handleResize, initScene } from "@/utils/threeHelper";
 import { invoke } from "@tauri-apps/api/core";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
@@ -17,6 +17,11 @@ export const useLasViewer = () => {
     const axesRef = useRef<THREE.AxesHelper | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const geometryRef = useRef<THREE.BufferGeometry | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    // 降采样
+    // const voxelSizeRef = useRef<number>(1.0);
+    // const preVoxelSizeRef = useRef<number>(1.0);
     
     const totalPointsRef = useRef<number>(0);
     const shownPointsRef = useRef<number>(0);
@@ -26,6 +31,8 @@ export const useLasViewer = () => {
     // 获取 Store 数据
     const path = useFileStore((state) => state.workFile);
     const setLasData = useLasStore((state) => state.setLasPoints);
+    const voxel = useLasStore((state) => state.voxelSlider);
+    const setVoxelSize = useLasStore((state) => state.setVoxelSlider);
 
 
         // 停止渲染并清除数据api
@@ -68,7 +75,7 @@ export const useLasViewer = () => {
         console.log("Cleanup complete and UI repainted.");
     };
 
-    // 2. 将加载函数定义为普通的 async 函数
+    // 将加载函数定义为普通的 async 函数
     const handleLoadLas = async () => {
         if (!path) {
             sendErrorLog("Front: No path provided");
@@ -153,6 +160,48 @@ export const useLasViewer = () => {
         }
     };
 
+    // 滑块处理函数
+    const handleVoxelChange = async (voxelSize: number) => {
+
+        // 防止不必要的渲染或者多次请求
+        if(voxelSize === voxel || isLoading === true)   return;
+
+        setIsLoading(true);
+        setVoxelSize(voxel);
+
+        if (!sceneRef.current || !geometryRef.current) return;
+
+        try {
+            const data = await invoke<PointCloudData>("voxel_downsample", {
+                points: useLasStore.getState().lasPoints, // 或缓存原始点
+                voxelSize,
+            });
+
+            const positions = new Float32Array(data.positions);
+
+            // 直接替换 buffer
+            geometryRef.current.setAttribute(
+                "position",
+                new THREE.BufferAttribute(positions, 3)
+            );
+
+            geometryRef.current.attributes.position.needsUpdate = true;
+
+            // 更新 draw range
+            const newCount = positions.length / 3;
+            geometryRef.current.setDrawRange(0, newCount);
+
+            totalPointsRef.current = newCount;
+            shownPointsRef.current = newCount; // 直接显示全部（不再动画也可以）
+
+            // 结束渲染
+            setIsLoading(false);
+        } catch (e) {
+            setIsLoading(false);
+            sendErrorLog(`Voxel update failed: ${e}`);
+        }
+    };
+
     // 3. 所有的副作用逻辑放在 useEffect 中
     useEffect(() => {
         const container = containerRef.current;
@@ -226,6 +275,7 @@ export const useLasViewer = () => {
         containerRef,
         handleLoadLas,
         handleStopAndClear,
-        isAnimatingRef // 建议通过 Ref 返回，或者在 handleLoadLas 内部使用
+        handleVoxelChange,
+        isAnimatingRef
     };
 };

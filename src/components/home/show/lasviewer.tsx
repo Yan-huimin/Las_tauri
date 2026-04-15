@@ -7,6 +7,7 @@ const LasViewer = () => {
   const path = useFileStore((state) => state.workFile);
   const loadLasInfo = useFileStore((state) => state.getFileInfo);
 
+
   // 每次path更新时触发加载
   useEffect(() => {
     if(path){

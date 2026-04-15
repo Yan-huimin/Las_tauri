@@ -1,4 +1,3 @@
-import ContainerItem from "@/components/home/containeritem";
 import HomeFile from "@/components/home/file/home-file";
 import HomeFileInput from "@/components/home/file/home-file-input";
 import HomeHistory from "@/components/home/history/home-history";
@@ -8,9 +7,11 @@ import type { ListItem, ToolItem } from "@/types/home.types";
 import { CloudUpload, Trash2, ScanEye } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import HomeShow from "@/components/home/show/home-show";
-import HomeShowLas from "@/components/home/show/home-show-las";
 import SpatialDashboard from "@/components/home/lasdata/home-z";
 import HomeZMain from "@/components/home/lasdata/home-z-main";
+import { useLasStore } from "@/store/useLasStore";
+import { useNavStore } from "@/store/useNavStore";
+import HomeTerminal from "@/components/home/show/home-terminal";
 
 const HOME_ITEMS: any[] = [
     {
@@ -66,6 +67,7 @@ const HOME_FILE_LOGO_CONFIG: ToolItem[] = [
         icon: <Trash2 />,
         onClick() {
             useFileStore.getState().resetWorkFile();
+            useLasStore.getState().cleanLasPoints();
         }
     }
 ]
@@ -93,7 +95,7 @@ const HOME_SHOW_CONFIG: ListItem[] = [
     {
         id: '',
         name: '',
-        icon: <HomeShowLas />
+        icon: <HomeTerminal />
     }
 ]
 
@@ -103,7 +105,7 @@ const HOME_SHOW_LOGO_CONFIG: ToolItem[] = [
         name: '',
         icon: <ScanEye />,
         onClick() {
-            
+            useNavStore.getState().setPage("view");
         }
     }
 ]

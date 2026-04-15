@@ -1,6 +1,5 @@
 import Navbar from "@/components/base/navbar";
-import SpatialDashboard from "@/components/home/lasdata/home-z";
-// import LasViewer from "@/components/home/show/lasviewer";
+import LasViewer from "@/components/home/show/lasviewer";
 
 const View = () => {
     return (<>
@@ -8,7 +7,7 @@ const View = () => {
             <Navbar title="View" />
             
             <main className="flex-1 w-full h-full border border-blue-500 overflow-y-auto custom-scrollbar">
-                <SpatialDashboard />
+                <LasViewer />
             </main>
         </div>
     </>);

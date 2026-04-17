@@ -1,12 +1,10 @@
 use rayon::prelude::*;
-use kiddo::{KdTree, SquaredEuclidean};
-use rand::seq::SliceRandom;
+use kiddo::{float::kdtree::KdTree, SquaredEuclidean};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use tauri::{Emitter, State};
 use crate::data::{AppData, point_cloud::PointCloudData};
 
-
-
+const BUCKET_SIZE: usize = 1_000_000;
 
 #[tauri::command]
 pub async fn voxel_downsample_las(
@@ -16,9 +14,15 @@ pub async fn voxel_downsample_las(
 ) -> Result<PointCloudData, String> {
 
     let data = {
-    let guard = app_data.source_data.read().unwrap();
-        guard.clone().ok_or("没有可用的源数据, 请先加载LAS文件")?
+        let guard = app_data.source_data.read().unwrap();
+        guard.as_ref().cloned().ok_or("没有可用的源数据, 请先加载LAS文件")?
     };
+
+    // 清空旧数据，释放内存
+    {
+        let mut old_data = app_data.vo_source_data.write().unwrap();
+        *old_data = None;
+    }
 
     let num_points = data.positions.len() / 3;
     if num_points == 0 {
@@ -36,7 +40,7 @@ pub async fn voxel_downsample_las(
     let processed_1 = AtomicUsize::new(0);
     let step_1 = (num_points / 100).max(1);
 
-    // 1. 生成 (VoxelKey, Index) 数组
+    // 生成 (VoxelKey, Index) 数组
     let mut keyed_indices: Vec<((i64, i64, i64), usize)> = (0..num_points)
         .into_par_iter()
         .map(|i| {
@@ -145,137 +149,307 @@ pub async fn voxel_downsample_las(
         }
     }
 
-    let res = PointCloudData { 
+    // 优化内存使用
+    out_positions.shrink_to_fit();
+    out_colors.shrink_to_fit();
+
+    let res = PointCloudData {
         positions: out_positions,
         colors: out_colors,
         offset: data.offset,
      };
 
-    // 写入 source_data
+    // 克隆一份给前端，原始数据存储到 vo_source_data
+    let result_for_frontend = res.clone();
     {
         let mut data = app_data.vo_source_data.write().unwrap();
-        *data = Some(res.clone());
+        *data = Some(res);  // 移动所有权到存储
     }
 
-    Ok(
-        res
-    )
+    Ok(result_for_frontend)
 }
 
 
+// #[tauri::command]
+// pub async fn sor_filter_pro(
+//     window: tauri::Window,
+//     data: PointCloudData,
+//     k: usize,
+//     std_ratio: f32,
+// ) -> Result<PointCloudData, String> {
+//     let num_points = data.positions.len() / 3;
+
+//     if num_points <= k {
+//         return Ok(data.clone());
+//     }
+
+//     // 1. 构建 KdTree
+//     window.emit("log-event", "[1/3] 正在构建空间索引...").unwrap();
+//     let mut tree: KdTree<f32, u64, 3, BUCKET_SIZE, u32> = KdTree::with_capacity(num_points);
+//     for i in 0..num_points {
+//         let base = i * 3;
+//         tree.add(
+//             &[data.positions[base], data.positions[base + 1], data.positions[base + 2]],
+//             i as u64,
+//         );
+//     }
+
+//     // 2. 统计量估算
+//     // println!("[2/3] 正在分析数据分布...");
+//     window.emit("log-event", "[2/3] 正在分析数据分布...").unwrap();
+//     let sample_count = 1_000_000.min(num_points);
+//     let mut rng = rand::rng();
+//     let mut indices: Vec<usize> = (0..num_points).collect();
+//     indices.shuffle(&mut rng);
+
+//     let sample_avg_dists: Vec<f32> = indices[..sample_count]
+//         .par_iter()
+//         .map(|&i| {
+//             let base = i * 3;
+//             let query = [data.positions[base], data.positions[base + 1], data.positions[base + 2]];
+//             let neighbors = tree.nearest_n::<SquaredEuclidean>(&query, k + 1);
+            
+//             let mut sum_dist = 0.0;
+//             let mut count = 0;
+//             for n in neighbors {
+//                 if n.item as usize != i {
+//                     sum_dist += n.distance.sqrt();
+//                     count += 1;
+//                 }
+//             }
+//             if count > 0 { sum_dist / count as f32 } else { 0.0 }
+//         })
+//         .collect();
+
+//     let sample_sum: f32 = sample_avg_dists.iter().sum();
+//     let mean = sample_sum / sample_count as f32;
+//     let variance: f32 = sample_avg_dists.iter().map(|&d| (d - mean).powi(2)).sum::<f32>() / sample_count as f32;
+//     let std_dev = variance.sqrt();
+//     let threshold = mean + std_ratio * std_dev;
+
+//     // 3. 全量并行判定 + 进度显示
+//     // println!("[3/3] 正在执行全量去噪计算...");
+//     window.emit("log-event", "[3/3] 正在执行全量去噪计算...").unwrap();
+//     let processed_count = AtomicUsize::new(0);
+//     let progress_step = (num_points / 100).max(1); // 每 1% 刷新一次
+
+//     let keep_mask: Vec<bool> = (0..num_points)
+//         .into_par_iter()
+//         .map(|i| {
+//             let base = i * 3;
+//             let query = [data.positions[base], data.positions[base + 1], data.positions[base + 2]];
+//             let neighbors = tree.nearest_n::<SquaredEuclidean>(&query, k + 1);
+            
+//             let mut sum_dist = 0.0;
+//             let mut count = 0;
+//             for n in neighbors {
+//                 if n.item as usize != i {
+//                     sum_dist += n.distance.sqrt();
+//                     count += 1;
+//                 }
+//             }
+
+//             // --- 进度条刷新逻辑 ---
+//             let current = processed_count.fetch_add(1, Ordering::Relaxed) + 1;
+//             if current % progress_step == 0 || current == num_points {
+//                 let percentage = (current as f32 / num_points as f32 * 100.0) as u32;
+//                 let msg = format!(">> 当前进度: {}%", percentage);
+//                 window.emit("log-event", msg).unwrap();
+//             }
+
+//             let d = if count > 0 { sum_dist / count as f32 } else { 0.0 };
+//             d <= threshold
+//         })
+//         .collect();
+
+//     // println!("\n计算完成，正在导出数据...");
+//     window.emit("log-event", "数据去噪完成...").unwrap();
+
+//     // 4. 同步抽取数据
+//     let mut new_positions = Vec::with_capacity(num_points * 3);
+//     let mut new_colors = Vec::with_capacity(data.colors.len());
+
+//     for i in 0..num_points {
+//         if keep_mask[i] {
+//             let base = i * 3;
+//             new_positions.extend_from_slice(&data.positions[base..base + 3]);
+//             if !data.colors.is_empty() {
+//                 new_colors.extend_from_slice(&data.colors[base..base + 3]);
+//             }
+//         }
+//     }
+
+//     Ok(PointCloudData {
+//         positions: new_positions,
+//         colors: new_colors,
+//         offset: data.offset,
+//     })
+// }
+
 
 #[tauri::command]
-pub fn sor_filter_pro(
-    window: &tauri::Window,
-    data: &PointCloudData,
-    k: usize,
-    std_ratio: f32,
-) -> PointCloudData {
+pub async fn sor_filter_pro(
+    window: tauri::Window,
+    data: PointCloudData,
+    k_neighbors: usize,
+    std_mul: f32,
+) -> Result<PointCloudData, String> {
     let num_points = data.positions.len() / 3;
 
-    if num_points <= k {
-        return data.clone();
+    if num_points <= k_neighbors || k_neighbors == 0 {
+        return Ok(data);
     }
 
-    // 1. 构建 KdTree
-    window.emit("log-event", "[1/3] 正在构建空间索引...").unwrap();
-    let mut tree: KdTree<f32, 3> = KdTree::with_capacity(num_points);
+    // ===============================
+    // KDTree 构建（对应 tree_->setInputCloud）
+    // ===============================
+    window.emit("log-event", "[1/3] 构建KDTree...")
+        .map_err(|e| e.to_string())?;
+
+    let mut tree: KdTree<f32, u64, 3, BUCKET_SIZE, u32> =
+        KdTree::with_capacity(num_points);
+
     for i in 0..num_points {
         let base = i * 3;
         tree.add(
-            &[data.positions[base], data.positions[base + 1], data.positions[base + 2]],
+            &[
+                data.positions[base],
+                data.positions[base + 1],
+                data.positions[base + 2],
+            ],
             i as u64,
         );
     }
 
-    // 2. 统计量估算
-    // println!("[2/3] 正在分析数据分布...");
-    window.emit("log-event", "[2/3] 正在分析数据分布...").unwrap();
-    let sample_count = 1_000_000.min(num_points);
-    let mut rng = rand::rng();
-    let mut indices: Vec<usize> = (0..num_points).collect();
-    indices.shuffle(&mut rng);
+    // ===============================
+    // 计算 mean distance（核心）
+    // mean distance of k neighbors
+    // ===============================
+    window.emit("log-event", "[2/3] 计算邻域距离...")
+        .map_err(|e| e.to_string())?;
 
-    let sample_avg_dists: Vec<f32> = indices[..sample_count]
-        .par_iter()
-        .map(|&i| {
-            let base = i * 3;
-            let query = [data.positions[base], data.positions[base + 1], data.positions[base + 2]];
-            let neighbors = tree.nearest_n::<SquaredEuclidean>(&query, k + 1);
-            
-            let mut sum_dist = 0.0;
-            let mut count = 0;
-            for n in neighbors {
-                if n.item as usize != i {
-                    sum_dist += n.distance.sqrt();
-                    count += 1;
-                }
+    let mut distances = vec![0.0f64; num_points];
+
+    distances.par_iter_mut().enumerate().for_each(|(i, dist_val)| {
+        let base = i * 3;
+
+        let query = [
+            data.positions[base],
+            data.positions[base + 1],
+            data.positions[base + 2],
+        ];
+
+        // PCL: k neighbors + self → k+1
+        let neighbors =
+            tree.nearest_n::<SquaredEuclidean>(&query, k_neighbors + 1);
+
+        let mut dist_sum = 0.0f64;
+        let mut count = 0;
+
+        for n in neighbors {
+            let idx = n.item as usize;
+
+            // ✅ 只排除自身（PCL行为）
+            if idx != i {
+                dist_sum += (n.distance as f64).sqrt();
+                count += 1;
             }
-            if count > 0 { sum_dist / count as f32 } else { 0.0 }
-        })
-        .collect();
+        }
 
-    let sample_sum: f32 = sample_avg_dists.iter().sum();
-    let mean = sample_sum / sample_count as f32;
-    let variance: f32 = sample_avg_dists.iter().map(|&d| (d - mean).powi(2)).sum::<f32>() / sample_count as f32;
-    let std_dev = variance.sqrt();
-    let threshold = mean + std_ratio * std_dev;
+        // PCL：如果找到邻居就取平均，否则=0
+        if count > 0 {
+            *dist_val = dist_sum / count as f64;
+        } else {
+            *dist_val = 0.0;
+        }
+    });
 
-    // 3. 全量并行判定 + 进度显示
-    // println!("[3/3] 正在执行全量去噪计算...");
-    window.emit("log-event", "[3/3] 正在执行全量去噪计算...").unwrap();
-    let processed_count = AtomicUsize::new(0);
-    let progress_step = (num_points / 100).max(1); // 每 1% 刷新一次
+    // ===============================
+    // 全局统计
+    // ===============================
+    window.emit("log-event", "[3/3] 统计分布...")
+        .map_err(|e| e.to_string())?;
 
-    let keep_mask: Vec<bool> = (0..num_points)
-        .into_par_iter()
-        .map(|i| {
-            let base = i * 3;
-            let query = [data.positions[base], data.positions[base + 1], data.positions[base + 2]];
-            let neighbors = tree.nearest_n::<SquaredEuclidean>(&query, k + 1);
-            
-            let mut sum_dist = 0.0;
-            let mut count = 0;
-            for n in neighbors {
-                if n.item as usize != i {
-                    sum_dist += n.distance.sqrt();
-                    count += 1;
-                }
-            }
+    let mut sum = 0.0f64;
+    let mut sq_sum = 0.0f64;
 
-            // --- 进度条刷新逻辑 ---
-            let current = processed_count.fetch_add(1, Ordering::Relaxed) + 1;
-            if current % progress_step == 0 || current == num_points {
-                let percentage = (current as f32 / num_points as f32 * 100.0) as u32;
-                let msg = format!(">> 当前进度: {}%", percentage);
-                window.emit("log-event", msg).unwrap();
-            }
+    // ⚠️ PCL：所有点都参与（包括0）
+    for &d in &distances {
+        sum += d;
+        sq_sum += d * d;
+    }
 
-            let d = if count > 0 { sum_dist / count as f32 } else { 0.0 };
-            d <= threshold
-        })
-        .collect();
+    let n = num_points as f64;
 
-    // println!("\n计算完成，正在导出数据...");
-    window.emit("log-event", "数据去噪完成...").unwrap();
+    let mean = sum / n;
 
-    // 4. 同步抽取数据
+    // 无偏方差（n-1）
+    let variance = if n > 1.0 {
+        (sq_sum - (sum * sum) / n) / (n - 1.0)
+    } else {
+        0.0
+    };
+
+    let stddev = variance.sqrt();
+
+    let threshold = mean + std_mul as f64 * stddev;
+
+    // ===============================
+    // 4. 过滤（applyFilter）
+    // ===============================
+    window.emit("log-event", "[4/4] 执行滤波...")
+        .map_err(|e| e.to_string())?;
+
     let mut new_positions = Vec::with_capacity(num_points * 3);
     let mut new_colors = Vec::with_capacity(data.colors.len());
 
     for i in 0..num_points {
-        if keep_mask[i] {
+        // PCL: <= threshold 保留
+        if distances[i] <= threshold {
             let base = i * 3;
+
             new_positions.extend_from_slice(&data.positions[base..base + 3]);
-            if !data.colors.is_empty() {
+
+            if data.colors.len() >= base + 3 {
                 new_colors.extend_from_slice(&data.colors[base..base + 3]);
             }
         }
     }
 
-    PointCloudData {
+    window.emit(
+        "log-event",
+        format!(
+            "SOR完成: {} -> {} (mean={:.5}, stddev={:.5})",
+            num_points,
+            new_positions.len() / 3,
+            mean,
+            stddev
+        ),
+    ).ok();
+
+    Ok(PointCloudData {
         positions: new_positions,
         colors: new_colors,
         offset: data.offset,
-    }
+    })
+}
+
+#[tauri::command]
+pub async fn denoise_las(
+    window: tauri::Window,
+    app_data: tauri::State<'_, crate::data::AppData>,
+    threshold: f32,
+) -> Result<crate::data::point_cloud::PointCloudData, String> {
+    // 从 vo_source_data 获取当前数据
+    let data = {
+        let guard = app_data.vo_source_data.read().unwrap();
+        guard.as_ref().cloned().ok_or("没有可用的点云数据, 请先加载文件")?
+    };
+
+    // 设置默认参数：k=30（邻居数量），std_ratio=threshold
+    let k = 30;
+    let std_ratio = threshold;
+
+    // 调用 sor_filter_pro
+    sor_filter_pro(window, data, k, std_ratio).await
 }

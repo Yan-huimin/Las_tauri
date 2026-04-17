@@ -22,6 +22,7 @@ interface LasStore {
     updateMeasurementDistance: (distance: number | null) => void;
 };
 
+//@ts-ignore
 export const useLasStore = create<LasStore>((set, get) => ({
     currentPoint: null,
     comparePoint: null,

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { Upload, Box } from 'lucide-react';
 import { useLasStore } from "@/store/useLasStore";
 import { useHome } from '@/hooks/home/useHome';
 
@@ -46,7 +47,17 @@ const SpatialDashboard = () => {
   }, [lasPoints]);
 
   if (!lasPoints) {
-    return <div className="p-20 text-center opacity-50">请先载入 LAS 文件...</div>;
+    return <>
+      <div className="flex flex-col items-center justify-center h-96 bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 transition-all hover:border-blue-400 dark:hover:border-blue-600">
+        <div className="relative mb-6">
+          <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-2xl"></div>
+          <Box className="w-20 h-20 text-slate-400 dark:text-slate-600 relative z-10" strokeWidth={1.5} />
+          <Upload className="w-8 h-8 text-blue-500 absolute -bottom-1 -right-1 z-20 bg-white dark:bg-slate-800 rounded-full p-1 shadow-lg" />
+        </div>
+        <h3 className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">暂无点云数据</h3>
+        <p className="text-sm text-slate-500 dark:text-slate-500 mb-6">请导入 LAS 文件以开始处理</p>
+      </div>
+    </>;
   }
 
   return (

@@ -1,11 +1,32 @@
+import { useMemo } from "react";
 import { useLasStore } from "@/store/useLasStore";
 import { formatDistance } from "@/utils/coordinates";
-import { Ruler, X, Target, MapPin, Zap } from "lucide-react";
+import { Ruler, X, Target, MapPin, Zap, BarChart3 } from "lucide-react";
+import useFileStore from "@/store/useFileStore";
 
 const MeasurementPanel = () => {
   const measurement = useLasStore((state) => state.measurement);
   const toggleMeasuring = useLasStore((state) => state.toggleMeasuring);
   const clearMeasurement = useLasStore((state) => state.clearMeasurement);
+  const currentPoint = useLasStore((state) => state.currentPoint);
+  const comparePoint = useLasStore((state) => state.comparePoint);
+  const OriginalPoint = useFileStore((state) => state.lasInfo?.total_count);
+
+  const comparisonStats = useMemo(() => {
+    if (!OriginalPoint || !comparePoint || !currentPoint) return null;
+    const originalPoints = OriginalPoint;
+    const processedPoints = comparePoint.positions.length / 3;
+    const originalColors = currentPoint.colors.length / 3;
+    const processedColors = comparePoint.colors.length / 3;
+    const pointReduction = originalPoints > 0 ? ((originalPoints - processedPoints) / originalPoints * 100).toFixed(2) : "0.00";
+    return {
+      originalPoints,
+      processedPoints,
+      originalColors,
+      processedColors,
+      pointReduction
+    };
+  }, [currentPoint, comparePoint]);
 
   const isMeasuring = measurement.isMeasuring;
   const points = measurement.points;
@@ -55,6 +76,31 @@ const MeasurementPanel = () => {
               : "测量模式已关闭"}
           </span>
         </div>
+
+        {/* 数据对比卡片 */}
+        {comparisonStats && (
+          <div className="p-3 rounded-md bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800">
+            <div className="flex items-center gap-2 mb-2">
+              <BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                原始数据 vs 处理数据
+              </span>
+            </div>
+            <div className="space-y-2 text-sm">
+              <div className="grid grid-cols-2 gap-1">
+                <div className="text-slate-600 dark:text-slate-400">原始点数:</div>
+                <div className="font-mono text-right">{comparisonStats.originalPoints.toLocaleString()}</div>
+                <div className="text-slate-600 dark:text-slate-400">处理后点数:</div>
+                <div className="font-mono text-right">{comparisonStats.processedPoints.toLocaleString()}</div>
+                <div className="text-slate-600 dark:text-slate-400">点减少:</div>
+                <div className="font-mono text-right">{comparisonStats.pointReduction}%</div>
+              </div>
+              <div className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-1">
+                点击降采样或去噪后生成对比数据
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 点信息 */}
         <div className="space-y-3">

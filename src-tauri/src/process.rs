@@ -151,6 +151,12 @@ pub async fn load_las_file(window: tauri::Window, _app: AppHandle, app_data: Sta
         }
     }
 
+    // 优化内存使用
+    original_positions.shrink_to_fit();
+    original_colors.shrink_to_fit();
+    downsampled_positions.shrink_to_fit();
+    downsampled_colors.shrink_to_fit();
+
     let point_count = (downsampled_positions.len() / 3) as u64;
 
     //开始构建二进制包
@@ -178,6 +184,14 @@ pub async fn load_las_file(window: tauri::Window, _app: AppHandle, app_data: Sta
         colors: downsampled_colors,
         offset,
     };
+
+    // 释放旧数据，然后写入新数据
+    {
+        let mut source = app_data.source_data.write().unwrap();
+        let mut vo_source = app_data.vo_source_data.write().unwrap();
+        *source = None;
+        *vo_source = None;
+    }
 
     // 写入 source_data (原始数据)
     {

@@ -68,6 +68,7 @@ const HOME_FILE_LOGO_CONFIG: ToolItem[] = [
         onClick() {
             useFileStore.getState().resetWorkFile();
             useLasStore.getState().cleanCurrentLasPoints();
+            useLasStore.getState().cleanCompareLasPoints();
         }
     }
 ]

@@ -40,6 +40,7 @@ export const useLasViewer = (target: 'current' | 'compare' = 'current') => {
 
     // 测量相关状态
     const measurement = useLasStore((state) => state.measurement);
+    //@ts-ignore
     const addMeasurementPoint = useLasStore((state) => state.addMeasurementPoint);
     const updateMeasurementDistance = useLasStore((state) => state.updateMeasurementDistance);
 

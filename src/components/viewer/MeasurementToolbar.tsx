@@ -1,3 +1,4 @@
+import useFileStore from "@/store/useFileStore";
 import { useLasStore } from "@/store/useLasStore";
 import type { PointCloudData } from "@/types/las.types";
 import { invoke } from "@tauri-apps/api/core";
@@ -16,11 +17,11 @@ const MeasurementToolbar = () => {
 
     const handleDenoise = async () => {
         try {
-            const cur = await invoke<PointCloudData>("denoise_las", { threshold: 0.1 });
+            const cur = await invoke<PointCloudData>("denoise_las", { threshold: 1.0 });
             setCompareData(cur);
         } catch (error) {
             console.error("去噪功能尚未实现:", error);
-            alert("去噪功能后端尚未实现，请先添加Rust函数 denoise_las");
+            alert("去噪功能后端尚未实现, 请先添加Rust函数 denoise_las");
         }
     };
 
@@ -35,7 +36,7 @@ const MeasurementToolbar = () => {
             <div className="flex-1" />
             <button
                 onClick={toggleMeasuring}
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors cursor-pointer ${
                     measurement.isMeasuring
                         ? "bg-red-500 hover:bg-red-600 text-white"
                         : "bg-blue-500 hover:bg-blue-600 text-white"
@@ -45,22 +46,32 @@ const MeasurementToolbar = () => {
             </button>
             <button
                 onClick={clearMeasurement}
-                className="px-3 py-1 rounded-md text-sm font-medium bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 flex items-center gap-1"
+                className="px-3 py-1 rounded-md cursor-pointer text-sm font-medium bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 flex items-center gap-1"
             >
                 <X className="w-4 h-4" />
                 清除
             </button>
             <button
                 onClick={handleDownsample}
-                className="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md text-sm font-medium"
+                className="px-3 py-1 bg-yellow-500 cursor-pointer hover:bg-yellow-600 text-white rounded-md text-sm font-medium"
             >
                 降采样
             </button>
             <button
                 onClick={handleDenoise}
-                className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded-md text-sm font-medium"
+                className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded-md text-sm font-medium cursor-pointer"
             >
                 去噪
+            </button>
+            <button
+                onClick={() => {
+                    useFileStore.getState().resetWorkFile();
+                    useLasStore.getState().cleanCurrentLasPoints();
+                    useLasStore.getState().cleanCompareLasPoints();
+                }}
+                className="px-3 py-1 bg-pink-500 hover:bg-pink-600 text-white rounded-md text-sm font-medium cursor-pointer"
+            >
+                清除文件
             </button>
         </div>
     );

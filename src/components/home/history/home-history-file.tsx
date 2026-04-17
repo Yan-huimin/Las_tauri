@@ -1,10 +1,12 @@
 import { useHome } from "@/hooks/home/useHome";
+import { useLasViewer } from "@/hooks/viewer/useLasViewer";
 import { CloudSync } from "lucide-react";
 
 
 const HomeHistoryFile = () => {
 
   const {history, setWorkFile} = useHome();
+  const {handleLoadLas} = useLasViewer();
 
   return (
 <>
@@ -33,7 +35,8 @@ const HomeHistoryFile = () => {
               {/* 装饰按钮 - 仅悬停可见 */}
               <button className="opacity-0 group-hover:opacity-100 p-2 text-blue-400 hover:text-blue-500 transition-all cursor-pointer">
                 <CloudSync className="w-4 h-4" onClick={() => {
-                  setWorkFile(item)
+                  setWorkFile(item);
+                  handleLoadLas(item);
                 }} />
               </button>
             </div>

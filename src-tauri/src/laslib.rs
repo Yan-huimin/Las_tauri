@@ -1,197 +1,32 @@
-use std::{ path::PathBuf };
-use tauri_plugin_dialog::DialogExt;
-use las::{Reader};
-use serde::Serialize;
-use tauri::{AppHandle, Manager};
-use crate::logger::{push_log};
-use std::path::Path;
 use rayon::prelude::*;
 use kiddo::{KdTree, SquaredEuclidean};
 use rand::seq::SliceRandom;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use tauri::Emitter;
+use tauri::{Emitter, State};
+use crate::data::{AppData, point_cloud::PointCloudData};
+
+
+
 
 #[tauri::command]
-pub fn check_file_exists(path: String) -> bool {
-    // 使用 Path 结构体检查路径是否存在，且必须是一个文件
-    let path_buf = Path::new(&path);
-    path_buf.exists() && path_buf.is_file()
-}
-
-// 打开开发者工具（调试用）
-#[tauri::command]
-pub fn open_devtools(app: tauri::AppHandle) {
-  if let Some(window) = app.get_webview_window("main") {
-    // push_log("error", "测试错误日志".to_string());
-    // push_log("info", "测试信息日志".to_string());
-    // push_log("warn", "测试警告日志".to_string());
-    // push_log("debug", "测试调试日志".to_string());
-    window.open_devtools();
-    push_log("debug", "open devtools".to_string());
-  }
-}
-
-#[derive(Serialize, Clone)]
-pub struct PointCloudData {
-    pub positions: Vec<f32>,
-    pub colors: Vec<u8>,
-    pub offset: [f64; 3],
-}
-
-#[derive(Serialize, Clone)]
-pub struct LasInfo {
-    pub x_max: f64, x_min: f64,
-    pub y_max: f64, y_min: f64,
-    pub z_max: f64, z_min: f64,
-    pub total_count: i64,
-}
-
-// 文件选择器命令，返回用户选择的文件路径
-#[tauri::command]
-pub async fn pick_file_path(handle: tauri::AppHandle) -> Result<PathBuf, String> {
-    // 使用 Tauri 官方 Dialog 插件，它是异步且非阻塞的
-    let file_path = handle.dialog()
-        .file()
-        .add_filter("Point Cloud", &["las"])
-        .set_title("选择点云文件")
-        .blocking_pick_file(); // 在 async 环境中也可以使用，或者用 pick_file 并 await
-
-    match file_path {
-        Some(path) => {
-            push_log("info", format!("load las file from : {}", path));
-            path.into_path().map_err(|e| e.to_string())
-        },
-        None => {
-            push_log("info", "user cancle choose file".to_string());
-            Err("用户取消了选择".to_string())
-        }
-    }
-}
-
-#[tauri::command]
-pub async fn load_las_info(_app: AppHandle, path: String) -> Result<LasInfo, String> {
-    let reader = Reader::from_path(&path).map_err(|e| e.to_string())?;
-    let header = reader.header();
-
-    // 获取点总数
-    let total_count = header.number_of_points() as i64;
-    
-    // 获取边界信息
-    let bounds = header.bounds();
-
-    push_log("info", format!("load las info from {}", path));
-    push_log("info", format!("Las file info: Point_Count {}", total_count));
-
-    // 修正：确保 y 对应 .y，z 对应 .z
-    Ok(LasInfo {
-        x_max: bounds.max.x,
-        x_min: bounds.min.x,
-        y_max: bounds.max.y, 
-        y_min: bounds.min.y,
-        z_max: bounds.max.z,
-        z_min: bounds.min.z,
-        total_count: total_count,
-    })
-}
-
-// 加载las数据点
-#[tauri::command]
-pub async fn load_las_file(_app: AppHandle, window: tauri::Window, path: String) -> Result<PointCloudData, String> {
-
-    println!("rust加载测试......");
-
-    let mut reader = Reader::from_path(path).map_err(|e| e.to_string())?;
-    let header = reader.header();
-    let num_points = header.number_of_points() as usize;
-
-    // let max_points = 2_000_000; 
-    // let step = if num_points > max_points { num_points / max_points } else { 1 };
-
-    let step = 1;
-
-    let bounds = header.bounds();
-    let z_min = bounds.min.z;
-    let z_max = bounds.max.z;
-    let z_range = z_max - z_min;
-
-    let offset = [
-        (bounds.min.x + bounds.max.x) / 2.0,
-        (bounds.min.y + bounds.max.y) / 2.0,
-        (bounds.min.z + bounds.max.z) / 2.0,
-    ];
-
-    let estimated_points = num_points / step;
-    let mut positions = Vec::with_capacity(estimated_points * 3);
-    let mut colors = Vec::with_capacity(estimated_points * 3);
-
-    for (index, point) in reader.points().enumerate() {
-        if index % step == 0 {
-            let p = point.map_err(|e| e.to_string())?;
-            
-            // 坐标处理
-            positions.push((p.x - offset[0]) as f32);
-            positions.push((p.y - offset[1]) as f32);
-            positions.push((p.z - offset[2]) as f32);
-
-            // 根据 Z 值计算颜色
-            // 计算当前点在高度范围内的比例 (0.0 ~ 1.0)
-            let ratio = if z_range > 0.0 {
-                (p.z - z_min) / z_range
-            } else {
-                0.5
-            };
-
-            // 彩虹色映射函数
-            let (r, g, b) = get_color_from_ratio(ratio);
-            colors.push(r);
-            colors.push(g);
-            colors.push(b);
-        }
-    }
-
-    let cur = PointCloudData{positions,colors,offset };
-
-    let voxel: PointCloudData = voxel_downsample_las(&window, &cur, 0.5);
-
-    // println!("voxel success");
-
-    let cleaned: PointCloudData = sor_filter_pro(&window, &voxel, 30, 2.0);
-
-    // println!("cleaned success");
-
-    window.emit("log-event", format!("去除点数：{}", voxel.positions.len() / 3 - cleaned.positions.len() / 3)).unwrap();
-    window.emit("log-event", "*************数据处理完成************").unwrap();
-
-    println!("{}", format!("voxel点数：{}", voxel.positions.len() / 3));
-    println!("{}", format!("cleaned点数：{}", cleaned.positions.len() / 3));
-
-    Ok(
-        cleaned
-    )
-}
-
-
-fn get_color_from_ratio(ratio: f64) -> (u8, u8, u8) {
-    let r = (255.0 * ratio).clamp(0.0, 255.0) as u8;
-    let g = (255.0 * (1.0 - (ratio - 0.5).abs() * 2.0)).clamp(0.0, 255.0) as u8;
-    let b = (255.0 * (1.0 - ratio)).clamp(0.0, 255.0) as u8;
-    
-    (r, g, b)
-}
-
-
-pub fn voxel_downsample_las(
-    window: &tauri::Window, // 新增 window 参数用于进度显示
-    data: &PointCloudData, 
+pub async fn voxel_downsample_las(
+    window: tauri::Window, // window 参数用于进度显示
+    app_data: State<'_, AppData>,
     voxel_size: f32
-) -> PointCloudData {
+) -> Result<PointCloudData, String> {
+
+    let data = {
+    let guard = app_data.source_data.read().unwrap();
+        guard.clone().ok_or("没有可用的源数据, 请先加载LAS文件")?
+    };
+
     let num_points = data.positions.len() / 3;
     if num_points == 0 {
-        return PointCloudData {
+        return Ok(PointCloudData {
             positions: Vec::new(),
             colors: Vec::new(),
             offset: data.offset,
-        };
+        })
     }
 
     let _ = window.emit("log-event", "[1/3] 正在对原始点进行体素标记...");
@@ -310,15 +145,26 @@ pub fn voxel_downsample_las(
         }
     }
 
-    PointCloudData {
+    let res = PointCloudData { 
         positions: out_positions,
         colors: out_colors,
         offset: data.offset,
+     };
+
+    // 写入 source_data
+    {
+        let mut data = app_data.vo_source_data.write().unwrap();
+        *data = Some(res.clone());
     }
+
+    Ok(
+        res
+    )
 }
 
 
 
+#[tauri::command]
 pub fn sor_filter_pro(
     window: &tauri::Window,
     data: &PointCloudData,

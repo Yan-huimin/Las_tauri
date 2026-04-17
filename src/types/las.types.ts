@@ -10,3 +10,14 @@ export interface LasInfo {
   z_max: number,  z_min: number,
   total_count: number,
 }
+
+export interface MeasurementPoint {
+  position: [number, number, number];       // 原始坐标（带offset）
+  displayPosition: [number, number, number]; // 显示坐标（无offset）
+}
+
+export interface MeasurementState {
+  isMeasuring: boolean;
+  points: MeasurementPoint[];
+  distance: number | null;
+}

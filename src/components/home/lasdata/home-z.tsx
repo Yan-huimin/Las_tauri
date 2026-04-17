@@ -4,7 +4,7 @@ import { useLasStore } from "@/store/useLasStore";
 import { useHome } from '@/hooks/home/useHome';
 
 const SpatialDashboard = () => {
-  const lasPoints = useLasStore((state) => state.lasPoints);
+  const lasPoints = useLasStore((state) => state.currentPoint);
   const { calculateHistogramWithOffset } = useHome();
 
   const hsvToRgb = (h: number, s: number, v: number) => {
@@ -52,14 +52,14 @@ const SpatialDashboard = () => {
   return (
     <div className="grid grid-cols-1 animate-in fade-in duration-500">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
-        <div className="flex justify-between items-center mb-6">
+        {/* <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
             高程分布
           </h3>
           <span className="text-xs px-2 py-1 bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 rounded">
             Z-Axis
           </span>
-        </div>
+        </div> */}
 
         <div className="h-[350px] w-full">
           <ResponsiveContainer width="100%" height="100%">

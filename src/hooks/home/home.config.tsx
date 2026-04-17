@@ -4,7 +4,7 @@ import HomeHistory from "@/components/home/history/home-history";
 import HomeHistoryFile from "@/components/home/history/home-history-file";
 import useFileStore from "@/store/useFileStore";
 import type { ListItem, ToolItem } from "@/types/home.types";
-import { CloudUpload, Trash2, ScanEye } from "lucide-react";
+import { CloudUpload, Trash2, ScanEye, Ruler } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import HomeShow from "@/components/home/show/home-show";
 import SpatialDashboard from "@/components/home/lasdata/home-z";
@@ -67,7 +67,7 @@ const HOME_FILE_LOGO_CONFIG: ToolItem[] = [
         icon: <Trash2 />,
         onClick() {
             useFileStore.getState().resetWorkFile();
-            useLasStore.getState().cleanLasPoints();
+            useLasStore.getState().cleanCurrentLasPoints();
         }
     }
 ]
@@ -101,8 +101,16 @@ const HOME_SHOW_CONFIG: ListItem[] = [
 
 const HOME_SHOW_LOGO_CONFIG: ToolItem[] = [
     {
-        id: '',
-        name: '',
+        id: 'measure',
+        name: '测量',
+        icon: <Ruler />,
+        onClick() {
+            useNavStore.getState().setPage("view");
+        }
+    },
+    {
+        id: 'view',
+        name: '查看',
         icon: <ScanEye />,
         onClick() {
             useNavStore.getState().setPage("view");

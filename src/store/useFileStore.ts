@@ -47,8 +47,10 @@ const useFileStore = create<FileState>((set, get) => ({
 
   getFileInfo: async () => {
       const path = get().workFile;
+
+      console.log("test getFileInfo funciton");
       
-      if (!path) return;
+      // if (!path) return;
 
       try {
           const data = await invoke<LasInfo>("load_las_info", { path });

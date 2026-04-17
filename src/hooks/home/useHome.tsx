@@ -1,13 +1,18 @@
 import useFileStore from "@/store/useFileStore";
 import { sendErrorLog } from "@/utils/sendlog";
 import { invoke } from "@tauri-apps/api/core";
+import { useLasViewer } from "../viewer/useLasViewer";
 
 export const useHome = () => {
+
+    const { handleLoadLas } = useLasViewer();
+
     const history = useFileStore((state) => state.historyFiles);
     const setWorkFile = useFileStore((state) => state.setWorkFile);
 
     const addHistoryFiles = useFileStore((state) => state.addHistoryFiles);
     const path = useFileStore((state) => state.workFile);
+    const loadLasInfo = useFileStore((state) => state.getFileInfo);
 
     const calculateHistogramWithOffset = (
         positions: Float32Array, 
@@ -21,7 +26,7 @@ export const useHome = () => {
         let min = Infinity;
         let max = -Infinity;
 
-        // 1. 找到该轴在相对坐标下的极值
+        // 找到该轴在相对坐标下的极值
         for (let i = axis; i < positions.length; i += 3) {
             if (positions[i] < min) min = positions[i];
             if (positions[i] > max) max = positions[i];
@@ -41,7 +46,7 @@ export const useHome = () => {
             bins[binIdx]++;
         }
 
-        // 3. 格式化返回：标签 (label) 需要还原真实坐标
+        // 格式化返回：标签 (label) 需要还原真实坐标
         return Array.from(bins).map((count, i) => {
             // 计算该箱体对应的真实地理坐标
             const realCoord = min + i * binSize + currentOffset;
@@ -52,12 +57,17 @@ export const useHome = () => {
             };
         });
     };
+    
     const handlePickFile = async () => {
         try {
             const cur: string = await invoke("pick_file_path");
                 if (cur) {
                     setWorkFile(cur);
                     addHistoryFiles(cur);
+                    console.log("test handlipckfile");
+                    // 传递文件路径给handleLoadLas，避免闭包问题
+                    handleLoadLas(cur);
+                    loadLasInfo();
                 }
             } catch (err) {
                 console.error("load file error:", err);

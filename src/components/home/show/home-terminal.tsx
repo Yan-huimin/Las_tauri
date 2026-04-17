@@ -21,7 +21,7 @@ const HomeTerminal: React.FC = () => {
         const isProgress = newMsg.startsWith('>>');
 
         setLogs((prevLogs) => {
-          // 修复逻辑：如果是进度条且上一条也是进度条，则替换内容，保留原始时间戳
+          // 如果是进度条且上一条也是进度条，则替换内容，保留原始时间戳
           if (isProgress && prevLogs.length > 0 && prevLogs[prevLogs.length - 1].isProgress) {
             const updated = [...prevLogs];
             updated[updated.length - 1] = {
@@ -59,7 +59,7 @@ const HomeTerminal: React.FC = () => {
   }, [logs]);
 
   return (
-    /* 外层容器：支持暗黑模式切换 */
+    /* 外层容器 */
     <div className="p-0.5 bg-[#f3f3f3] dark:bg-[#252526] transition-colors duration-200">
       <div
         ref={terminalRef}
@@ -75,7 +75,7 @@ const HomeTerminal: React.FC = () => {
                 : ''
             }`}
           >
-            {/* 时间戳：固定样式 */}
+            {/* 时间戳 */}
             <span className="shrink-0 text-gray-400 dark:text-gray-500 select-none">
               [{log.timestamp}]
             </span>

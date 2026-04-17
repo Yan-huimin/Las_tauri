@@ -1,28 +1,28 @@
 import { useLasViewer } from "@/hooks/viewer/useLasViewer";
-import useFileStore from "@/store/useFileStore";
+import type { PointCloudData } from '@/types/las.types';
 import { useEffect } from "react";
 
-const LasViewer = () => {
-  const { containerRef, handleLoadLas, handleStopAndClear } = useLasViewer();
-  const path = useFileStore((state) => state.workFile);
-  const loadLasInfo = useFileStore((state) => state.getFileInfo);
+interface PureLasViewerProps {
+  data: PointCloudData | null;
+  target?: 'current' | 'compare',
+  instanceId?: string;
+}
 
+export const LasViewer: React.FC<PureLasViewerProps> = ({
+  data,
+  target,
+  //@ts-ignore
+  instanceId
+}) => {
+  const { containerRef, displayPointCloudData, handleStopAndClear } = useLasViewer(target);
 
-  // 每次path更新时触发加载
   useEffect(() => {
-    if(path){
-      handleLoadLas();
-      loadLasInfo();
-    }else if(path === ''){
+    if (data) {
+      displayPointCloudData(data, target);
+    }else{
       handleStopAndClear();
     }
-  }, [path]);
+  }, [data, displayPointCloudData]);
 
-  return (
-    <div className="relative w-full h-full min-h-[400px] cursor-grab"> 
-      <div ref={containerRef} className="absolute w-full h-full" />
-    </div>
-  );
+  return <div ref={containerRef} className="w-full h-full cursor-grab" />;
 };
-
-export default LasViewer;

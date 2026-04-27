@@ -5,7 +5,7 @@ mod data;
 
 use process::{ open_devtools, load_las_file, pick_file_path, check_file_exists, load_las_info };
 use logger::{get_logs, clear_logs, send_error_log, send_info_log, send_warn_log, send_debug_log};
-use laslib::{ voxel_downsample_las, sor_filter_pro, denoise_las };
+use laslib::{ voxel_downsample_las, sor_filter_pro, denoise_las, save_las_file };
 
 use crate::data::AppData;
 
@@ -42,6 +42,7 @@ pub fn run() {
         voxel_downsample_las,
         sor_filter_pro,
         denoise_las,
+        save_las_file,
         ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

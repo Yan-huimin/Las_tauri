@@ -11,7 +11,7 @@ interface LasStore {
     };
 
     setCurrentLasPoints: (data: PointCloudData) => void;
-    setCompareLasPoints: (data: PointCloudData) => void;
+    setCompareLasPoints: (data: PointCloudData | null) => void;
     cleanCurrentLasPoints: () => void;
     cleanCompareLasPoints: () => void;
 
@@ -36,7 +36,7 @@ export const useLasStore = create<LasStore>((set, get) => ({
         set({ currentPoint: data });
     },
 
-    setCompareLasPoints: (data: PointCloudData) => {
+    setCompareLasPoints: (data: PointCloudData | null) => {
         set({ comparePoint: data });
     },
 

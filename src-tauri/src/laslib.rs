@@ -2,9 +2,11 @@ use rayon::prelude::*;
 use kiddo::{float::kdtree::KdTree, SquaredEuclidean};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use tauri::{Emitter, State};
+use tauri_plugin_dialog::DialogExt;
 use crate::data::{AppData, point_cloud::PointCloudData};
+use crate::logger::push_log;
 
-const BUCKET_SIZE: usize = 1_000_000;
+const BUCKET_SIZE: usize = 64;
 
 #[tauri::command]
 pub async fn voxel_downsample_las(
@@ -164,6 +166,10 @@ pub async fn voxel_downsample_las(
     {
         let mut data = app_data.vo_source_data.write().unwrap();
         *data = Some(res);  // 移动所有权到存储
+    }
+    {
+        let mut done = app_data.processing_done.write().unwrap();
+        *done = true;
     }
 
     Ok(result_for_frontend)
@@ -438,7 +444,8 @@ pub async fn sor_filter_pro(
 pub async fn denoise_las(
     window: tauri::Window,
     app_data: tauri::State<'_, crate::data::AppData>,
-    threshold: f32,
+    k_neighbors: usize,
+    std_mul: f32,
 ) -> Result<crate::data::point_cloud::PointCloudData, String> {
     // 从 vo_source_data 获取当前数据
     let data = {
@@ -446,10 +453,97 @@ pub async fn denoise_las(
         guard.as_ref().cloned().ok_or("没有可用的点云数据, 请先加载文件")?
     };
 
-    // 设置默认参数：k=30（邻居数量），std_ratio=threshold
-    let k = 30;
-    let std_ratio = threshold;
-
     // 调用 sor_filter_pro
-    sor_filter_pro(window, data, k, std_ratio).await
+    let result = sor_filter_pro(window, data, k_neighbors, std_mul).await?;
+
+    // 将去噪结果存回 vo_source_data
+    {
+        let mut stored = app_data.vo_source_data.write().unwrap();
+        *stored = Some(result.clone());
+    }
+    {
+        let mut done = app_data.processing_done.write().unwrap();
+        *done = true;
+    }
+
+    Ok(result)
+}
+
+#[tauri::command]
+pub async fn save_las_file(
+    app_handle: tauri::AppHandle,
+    app_data: tauri::State<'_, AppData>,
+) -> Result<String, String> {
+    // 检查是否进行了处理
+    let processing_done = *app_data.processing_done.read().unwrap();
+    if !processing_done {
+        return Err("请先进行降采样或去噪处理".to_string());
+    }
+
+    // 获取处理后的数据
+    let data = {
+        let guard = app_data.vo_source_data.read().unwrap();
+        guard.as_ref().cloned().ok_or("没有可用的处理后数据".to_string())?
+    };
+
+    let num_points = data.positions.len() / 3;
+    if num_points == 0 {
+        return Err("没有可保存的点云数据".to_string());
+    }
+
+    // 弹出保存对话框
+    let save_path = app_handle
+        .dialog()
+        .file()
+        .add_filter("LAS 文件", &["las"])
+        .set_title("保存处理后的点云文件")
+        .blocking_save_file()
+        .ok_or("用户取消了保存")?
+        .into_path()
+        .map_err(|e| format!("路径无效: {}", e))?;
+
+    // 使用 las Builder 创建 header (LAS 1.2, Format 2 = point + RGB color)
+    let mut builder = las::Builder::from((1, 2));
+    builder.point_format = las::point::Format::new(2).map_err(|e| e.to_string())?;
+    builder.system_identifier = "Las Tauri".to_string();
+    builder.generating_software = "Las Tauri Processor".to_string();
+    let header = builder.into_header().map_err(|e| e.to_string())?;
+
+    let file = std::fs::File::create(&save_path).map_err(|e| e.to_string())?;
+    let mut writer =
+        las::Writer::new(std::io::BufWriter::new(file), header).map_err(|e| e.to_string())?;
+
+    // 写入所有点（恢复原始坐标，保存颜色）
+    for i in 0..num_points {
+        let base = i * 3;
+        let point = las::Point {
+            x: data.positions[base] as f64 + data.offset[0],
+            y: data.positions[base + 1] as f64 + data.offset[1],
+            z: data.positions[base + 2] as f64 + data.offset[2],
+            color: if !data.colors.is_empty() {
+                Some(las::Color::new(
+                    (data.colors[base] as u16) * 257,
+                    (data.colors[base + 1] as u16) * 257,
+                    (data.colors[base + 2] as u16) * 257,
+                ))
+            } else {
+                None
+            },
+            return_number: 1,
+            number_of_returns: 1,
+            ..Default::default()
+        };
+        writer.write_point(point).map_err(|e| e.to_string())?;
+    }
+
+    // 显式关闭以刷新 header
+    writer.close().map_err(|e| e.to_string())?;
+
+    let path_str = save_path.to_string_lossy().to_string();
+    push_log(
+        "info",
+        format!("处理后的点云已保存: {} ({} 个点)", path_str, num_points),
+    );
+
+    Ok(path_str)
 }

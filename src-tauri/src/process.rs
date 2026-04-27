@@ -189,8 +189,10 @@ pub async fn load_las_file(window: tauri::Window, _app: AppHandle, app_data: Sta
     {
         let mut source = app_data.source_data.write().unwrap();
         let mut vo_source = app_data.vo_source_data.write().unwrap();
+        let mut done = app_data.processing_done.write().unwrap();
         *source = None;
         *vo_source = None;
+        *done = false;
     }
 
     // 写入 source_data (原始数据)

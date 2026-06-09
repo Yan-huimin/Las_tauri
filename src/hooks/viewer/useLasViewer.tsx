@@ -3,6 +3,7 @@ import type { PointCloudData } from "@/types/las.types";
 import { sendErrorLog, sendInfoLog } from "@/utils/sendlog";
 import { handleResize, initScene } from "@/utils/threeHelper";
 import { toOriginalCoords, calculateDistance } from "@/utils/coordinates";
+import { parsePointCloudBinary } from "@/utils/pointCloudBinary";
 import { invoke } from "@tauri-apps/api/core";
 import { useCallback, useEffect, useRef } from "react";
 import * as THREE from "three";
@@ -98,46 +99,6 @@ export const useLasViewer = (target: 'current' | 'compare' = 'current') => {
 
         console.log("Cleanup complete and UI repainted.");
     }, []);
-
-    /**
-     * 解析后端传来的点云二进制包
-     * 结构：
-     * 1. point_count (u64/u32?) - 假设为 8 字节 (u64)
-     * 2. offset (3 * f64) - 24 字节
-     * 3. positions (N * 3 * f32) - N * 12 字节
-     * 4. colors (N * 3 * u8) - N * 3 字节
-     */
-    function parsePointCloudBinary(input: Uint8Array | ArrayBuffer): PointCloudData {
-        // 统一提取出 ArrayBuffer 和偏移量
-        // 如果是 Uint8Array，需要考虑它在底层 buffer 中的起始偏移量(byteOffset)
-        const buffer = input instanceof Uint8Array ? input.buffer : input;
-        const byteOffset = input instanceof Uint8Array ? input.byteOffset : 0;
-        const byteLength = input instanceof Uint8Array ? input.byteLength : input.byteLength;
-
-        let cursor = 0;
-
-        // 构造 DataView 时传入偏移量和长度
-        const view = new DataView(buffer, byteOffset, byteLength);
-        
-        // 读取 Header (u64)
-        const pointCount = Number(view.getBigUint64(cursor, true));
-        cursor += 8;
-
-        // 读取 Offset (3 * f64)
-        // 注意：TypedArray 的偏移量必须是相对于整个 Buffer 的，所以要加上 byteOffset
-        const offsetView = new Float64Array(buffer, byteOffset + cursor, 3);
-        const offset: [number, number, number] = [offsetView[0], offsetView[1], offsetView[2]];
-        cursor += 24;
-
-        // 读取 Positions (N * 3 * f32)
-        const positions = new Float32Array(buffer, byteOffset + cursor, pointCount * 3);
-        cursor += pointCount * 3 * 4;
-
-        // 读取 Colors (N * 3 * u8)
-        const colors = new Uint8Array(buffer, byteOffset + cursor, pointCount * 3);
-
-        return { positions, colors, offset };
-    }
 
     // 显示点云数据
     const displayPointCloudData = useCallback((data: PointCloudData, targetParam?: 'current' | 'compare') => {

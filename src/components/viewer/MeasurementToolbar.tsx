@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import useFileStore from "@/store/useFileStore";
 import { useLasStore } from "@/store/useLasStore";
-import type { PointCloudData } from "@/types/las.types";
+import { parsePointCloudBinary } from "@/utils/pointCloudBinary";
 import { invoke } from "@tauri-apps/api/core";
 import { Ruler, X, Save } from "lucide-react";
 
@@ -20,21 +20,22 @@ const MeasurementToolbar = () => {
     const handleDownsample = async () => {
         const vSize = parseFloat(voxelSize) || 0.5;
         setCompareData(null);
-        const cur = await invoke<PointCloudData>("voxel_downsample_las", { voxelSize: vSize });
-        setCompareData(cur);
+        const cur = await invoke<Uint8Array>("voxel_downsample_las", { voxelSize: vSize });
+        const data = parsePointCloudBinary(cur);
+        setCompareData(data);
     };
 
     const handleDenoise = async () => {
         try {
-            // const vSize = parseFloat(voxelSize) || 0.5;
             const k = parseInt(kNeighbors) || 15;
             const s = parseFloat(stdMul) || 1.0;
 
             // 清空对比数据
             setCompareData(null);
 
-            const cur = await invoke<PointCloudData>("denoise_las", { kNeighbors: k, stdMul: s });
-            setCompareData(cur);
+            const cur = await invoke<Uint8Array>("denoise_las", { kNeighbors: k, stdMul: s });
+            const data = parsePointCloudBinary(cur);
+            setCompareData(data);
         } catch (error) {
             console.error("去噪失败:", error);
             alert("去噪失败: " + error);
